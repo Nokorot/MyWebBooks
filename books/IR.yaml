@@ -1,0 +1,23 @@
+# This file is for the IR-dl script. Not the html_to_epub
+#  Note:
+#   - That the there is no entry point and instead a rss_url
+#   - The lastTime entry is modifyed by the script
+
+rss_url: https://www.royalroad.com/fiction/syndication/27325
+lastTime: 2023-01-22T12:17:39+0000
+
+cache: ./cache/IR
+callbacks: books.IR.Callbacks
+book:
+    title: Infinite Realm
+    author: Ivan Kal
+    epub_filename: out/IR-2023-01-24.epub
+    cover_image: https://www.royalroadcdn.com/public/covers-large/27325-infinite-realm-monsters-legends.jpg
+    css_filename: html_to_epub/kindle.css
+    chapter:
+        section_css_selector: div.fic-header h1.font-white
+        title_css_selector: div.chapter-inner strong
+        text_css_selector: div.chapter-inner
+        next_chapter_css_selector: div.col-md-offset-4 a.btn
+    images:
+        sep.png: https://www.royalroad.com/dist/img/ornaments/16.png
