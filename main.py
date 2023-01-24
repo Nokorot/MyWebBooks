@@ -9,6 +9,9 @@ from sendToKindle import main as sendToKindle
 
 app = Flask(__name__)
 
+if not os.path.exists('./out'):
+    os.makedirs("./out")
+
 
 @app.route('/RR_rss')
 def RR_rss():
@@ -16,9 +19,11 @@ def RR_rss():
     if not new:
         return "No updates!"
 
-    epub_file = 'out/IR-2023-01-24.epub'
+    # epub_file = 'out/IR-2023-01-24.epub'
+    with open("out/latest.txt", "w") as f:
+        f.write(epub_file)
 
-    sendToKindle(epub_file)
+    # sendToKindle(epub_file)
 
     return """
     <html> <p>A new update was sent to the kindle <p>
@@ -31,9 +36,11 @@ def RR_rss():
 
 @app.route('/dl-latest-epub')
 def dl_latest_epub():
-    epub_file = 'out/IR-2023-01-24.epub'
-    return send_file(epub_file, as_attachment=True, attachment_filename=epub_file)
+    with open("out/latest.txt", "r") as f:
+        epub_file = f.read()
+    # epub_file = 'out/IR-2023-01-24.epub'
 
+    return send_file(epub_file, as_attachment=True, attachment_filename=epub_file)
 
 
 @app.route('/')

@@ -2,6 +2,8 @@ import sys, os, optparse
 import json, yaml
 import requests, xmltodict
 
+import copy
+
 from datetime import datetime
 from dateutil import parser as date_parser
 
@@ -19,7 +21,7 @@ def getChapters(url, data):
         config['cache'] = data['cache']
         config['ignore_cache'] = data.get('ignore_cache', True)
         config['callbacks'] = data['callbacks']
-        config['book'] = data['book']
+        config['book'] = copy.deepcopy(data['book'])
         config['book']['entry_point'] = url
         date = datetime.now().__format__("%F")
         config['book']['epub_filename'] = \
@@ -38,6 +40,9 @@ def getChapters(url, data):
 
     print(config.book.epub_filename)
     epub.write_epub(config.book.epub_filename, book.generate_epub(), {})
+
+    return config.book.epub_filename
+
 
 
 # Note: this code is very spesific
@@ -67,9 +72,9 @@ def load_datafile(dataFile):
 
     if not oldestNew:
         print("There are no updates!")
-        sys.exit(0)
+        return False, None
 
-    getChapters(oldestNew['link'], data)
+    epub_filename = getChapters(oldestNew['link'], data)
     data['lastTime'] = datetime.now().isoformat(timespec='seconds') + '+0000'
 
     yaml = YAML()
@@ -77,6 +82,7 @@ def load_datafile(dataFile):
     with open(dataFile, 'w') as fp:
         yaml.dump(data, fp)
 
+    return True, epub_filename
 
 __description = '''\
 Download the new chapters from royal road and turn them into an epub file.'''
