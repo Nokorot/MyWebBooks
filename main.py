@@ -23,7 +23,7 @@ def RR_rss():
     with open("out/latest.txt", "w") as f:
         f.write(epub_file)
 
-    # sendToKindle(epub_file)
+    sendToKindle(epub_file)
 
     return """
     <html> <p>A new update was sent to the kindle <p>
