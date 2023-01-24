@@ -4,11 +4,7 @@
 #   - The lastTime entry is modifyed by the script
 
 rss_url: https://www.royalroad.com/fiction/syndication/27325
-<<<<<<< HEAD
 lastTime: 2023-01-22T12:17:39+0000
-=======
-lastTime: 2023-01-24T00:37:53+0000
->>>>>>> 20da924b67936a29de3e7658b9bcce178da8cbcf
 
 cache: ./cache/IR
 callbacks: books.IR.Callbacks
@@ -25,7 +21,3 @@ book:
         next_chapter_css_selector: div.col-md-offset-4 a.btn
     images:
         sep.png: https://www.royalroad.com/dist/img/ornaments/16.png
-<<<<<<< HEAD
-=======
-    entry_point: https://www.royalroad.com/fiction/chapter/1094820
->>>>>>> 20da924b67936a29de3e7658b9bcce178da8cbcf
