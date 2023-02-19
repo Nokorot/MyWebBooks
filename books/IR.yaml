@@ -11,7 +11,7 @@ callbacks: books.IR.Callbacks
 book:
     title: Infinite Realm
     author: Ivan Kal
-    epub_filename: out/IR-2023-01-24.epub
+    epub_filename: out/IR-%date.epub
     cover_image: https://www.royalroadcdn.com/public/covers-large/27325-infinite-realm-monsters-legends.jpg
     css_filename: books/kindle.css
     chapter:
