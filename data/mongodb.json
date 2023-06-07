@@ -1,0 +1,9 @@
+{
+    "base_url": "https://eu-central-1.aws.data.mongodb-api.com/app/data-xltgv/endpoint/data/v1/action/",
+    "db_info": {
+        "dataSource" : "NokoCluster",
+        "database"   : "html_to_epub",
+        "collection" : "books"
+    },
+    "api_key": "u7vLVWCbNcstfvaOo3z3CSMnadl9Agxx0rL0DJSyx1zHixsYwnq8lVKct29Kenmw"
+}

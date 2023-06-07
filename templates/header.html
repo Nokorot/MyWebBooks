@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+ {% block head %}    
+ {% endblock %}    
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_dark.css') }}">
+    
+    <style>
+    .toggle-dark-mode {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+    }
+    </style>
+</head>
+<body>
+    <!-- Rounded switch -->
+    <label class="toggle-dark-mode switch">
+      <input type="checkbox" id="dark-mode-switch">
+      <span class="slider round"></span>
+    </label>
+
+    {% block body %}
+    {% endblock %}
+</body>
+
+<script>
+   function handleDarkMode() {
+       var body = document.body;
+       var mode_switch = document.getElementById('dark-mode-switch')
+       if (mode_switch.checked)
+            body.classList.add("dark-mode");
+       else
+            body.classList.remove("dark-mode");
+       localStorage.setItem("darkModeEnabled", mode_switch.checked);
+   }
+   document.getElementById('dark-mode-switch').addEventListener('change', handleDarkMode);
+
+   // Check if dark mode was previously enabled
+   var darkModeEnabled = localStorage.getItem("darkModeEnabled");
+   if (darkModeEnabled === "true") {
+       var body = document.body;
+       body.classList.add("dark-mode");
+       document.getElementById('dark-mode-switch').checked = true;
+   }
+</script>
+</html>

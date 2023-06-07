@@ -1,0 +1,20 @@
+{% extends 'header.html' %}
+
+{% block head %} 
+<title>New Data Instance</title>
+{% endblock %} 
+
+{% block body %}
+<h1>New Data Instance</h1>
+
+{% import 'macros/render_fields.j2' as macros %}
+<form action="{{ url_for('new_book') }}" method="POST">
+     {{ macros.render_fields(data) }}
+
+     <button class="button" type="submit">Save</button>
+</form>
+
+
+</body>
+
+{% endblock %}

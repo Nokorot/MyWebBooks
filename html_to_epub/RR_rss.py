@@ -44,7 +44,6 @@ def getChapters(url, data):
     return config.book.epub_filename
 
 
-
 # Note: this code is very spesific
 def getOldestNew(url, lastTime):
     r = requests.get(url, allow_redirects=True)
@@ -55,7 +54,7 @@ def getOldestNew(url, lastTime):
     oldestNew = None
     for item in channel['item']:
         item['pubDate'] = pubDate = date_parser.parse(item['pubDate'])
-        if (pubDate > lastTime and \
+        if ((not lastTime or pubDate > lastTime) and \
                 (not oldestNew or oldestNew['pubDate'] > pubDate)):
             print(item['link'])
             oldestNew = item

@@ -1,0 +1,24 @@
+{% macro render_fields(data) %}
+  {% for key, entry in data.items() %}
+
+    {% if entry.data %}
+      <div class="form-fields-group">
+        <label for="{{ key }}">{{ entry.label }}:</label>
+        {{ render_fields(entry.data) }}
+      </div>
+    {% else %}
+      <div class="form-row">
+          <label class="label " for="{{ key }}">{{ entry.label }}({{ entry.type }}):</label>
+          {% if entry.type == "str"  %}
+        <input type="text" id="{{ key }}" name="{{ key }}" value="{{ entry.text }}">
+          {% elif entry.type == "bool" %}
+        <label class="switch">
+        <input type="checkbox" id="{{ key }}" name="{{ key }}" checked="{{ entry.value }}">
+        <span class="slider round"></span>
+        </label>
+          {% else %}
+          {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}

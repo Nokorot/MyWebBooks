@@ -1,0 +1,23 @@
+<!-- form.html -->
+{% macro render_fields(data) %}
+  {% for key, entry in data.items() %}
+
+    {% if entry.data %}
+      <div class="group-fields">
+        <label for="{{ key }}">{{ entry.label }}:</label>
+        {{ render_fields(entry.data) }}
+      </div>
+    {% else %}
+      <div class="form-row">
+        <label class="label" for="{{ key }}">{{ entry.label }}:</label>
+        <input type="text" id="{{ key }}" name="{{ key }}" value="{{ entry.text }}">
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+<form action"{{ form_action }}" method="POST">
+  {{ render_fields(data) }}
+
+  <button class="button" type="submit">Submit</button>
+</form>

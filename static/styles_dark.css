@@ -1,0 +1,51 @@
+
+body.dark-mode {
+    background-color: #222;
+    color: #fff;
+}
+
+.dark-mode .container {
+    background-color: #333;
+    border: 1px solid #555;
+}
+
+.dark-mode h1 {
+    color: #fff;
+}
+
+.dark-mode .form-fields-group {
+    background-color: #444;
+    color: #fff;
+}
+
+.dark-mode .form-fields-group h2 {
+    color: #fff;
+}
+
+.dark-mode .label {
+    color: #aaa;
+}
+
+.dark-mode input {
+    background-color: #555;
+    color: #fff;
+    border: 1px solid #888;
+}
+
+.dark-mode .button {
+    background-color: #555;
+}
+
+.dark-mode .button:hover {
+    background-color: #777;
+}
+
+
+.dark-mode input:checked + .slider {
+  background-color: #336;
+}
+
+
+.dark-mode input:focus + .slider {
+  box-shadow: 0 0 1px #2126F3;
+}
