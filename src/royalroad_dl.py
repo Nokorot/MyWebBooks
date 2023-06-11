@@ -76,6 +76,7 @@ def download_book(id):
             "css_filename": "webbook_dl/kindle.css",
             "entry_point": data["ENTRY"],
             "chapter": css_selectors,
+            "include_images": data.get("INCLUDE_IMG", False),
         }
 
         config['book'] = book 
@@ -163,6 +164,7 @@ def book_config():
         "AUTHOR"     : {'label': 'Author',         },
         "COVER"      : {'label': 'Cover',          },
         "ENTRY"      : {'label': 'First Chapeter', },
+        "INCLUDE_IMG"  : {'label': 'Include Images', 'type': 'bool', 'value': False },
         #  "OUTFILE"    : {'label': 'Epub File Name', },
     }
 
