@@ -1,9 +1,65 @@
 {% include "header.html" %}
 
 {% block head %} 
-<title>Download Succsess</title>
+<title>{{ TITLE }}</title>
 {% endblock %} 
 
 {% block body %}
-The book was successfully downloaded.
-{% endblock %} 
+<h1>{{ TITLE }}</h1>
+
+
+The book was successfully downloaded. Note that for the send to kindle button to work, you need to allow the email ("{{ SENDERS_EMAIL }}") to send documents to your kindle. (See <a href="https://www.amazon.com/sendtokindle/email">amazon-sendtokindle-email</a> for information on how to do this.)
+<div class="container">
+
+
+{% import 'macros/render_fields.j2' as macros %}
+<form action="{{ ACTION }}" method="POST" onsubmit="submitForm(event)">
+  {{ macros.render_fields(DATA) }}
+
+  <input id="action" name="action" type="hidden">
+  <button class="button" type="submit" value="Download">Download</button>
+  <button class="button" type="submit" value="SendToKindle">SendToKindle</button>
+</form>
+</div>
+
+
+<script>
+
+// Check if dark mode was previously enabled
+var kindle_email = localStorage.getItem("kindle_email");
+document.getElementById("kindle_email").value = kindle_email;
+
+function submitForm(event) {
+    event.preventDefault();
+
+    if (event.submitter.value === "Download") {
+        var action = document.getElementsByName("action")[0];
+        action.value = "Download";
+        event.target.submit();
+    } else if (event.submitter.value === "SendToKindle") {
+        var formData = new FormData(event.target);
+        var action = document.getElementsByName("action")[0];
+        action.value = "SendToKindle";
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', "{{ACTION}}", true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert('Epub is sent. The file sould apaire on the kindle before too long!');
+            } else {
+                alert('Form submission failed');
+            }
+        };
+        xhr.send(formData);
+
+
+        var entry = document.getElementById('kindle_email');
+        localStorage.setItem("kindle_email", entry.value);
+    }
+} 
+</script>
+
+<!-- 
+<script>function submitForm(event){event.preventDefault();var formData=new FormData(event.target);var xhr=new XMLHttpRequest();xhr.open('POST',"{{ACTION}}",true);xhr.onload=function(){if(xhr.status===200){alert('Form submitted successfully');}else{alert('Form submission failed');}};xhr.send(formData);}</script>
+-->
+{% endblock %}

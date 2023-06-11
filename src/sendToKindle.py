@@ -8,18 +8,22 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-def main(file):
-    receiver='torhaakon2012_UTJkj4@kindle.com'
+def main(file, receiver=None, target_filename=None):
+    if not receiver:
+        return
     sender='torhoaakon@gmail.com'
     password = "igexqbjdzyfdgvyz" # os.environ.get("GMAIL_PASSWORD")
 
 
-    message = constructMessage(sender, receiver, file)
+    message = constructMessage(sender, receiver, file, target_filename)
     sendEmail(sender, password, receiver, message)
 
 
-def constructMessage(sender_add, receiver_add, file):
+def constructMessage(sender_add, receiver_add, file, target_filename=None):
     message = MIMEMultipart()
+
+    if not target_filename:
+        target_filename = file
     
     message["From"] = sender_add
     message['To'] = receiver_add
@@ -31,7 +35,7 @@ def constructMessage(sender_add, receiver_add, file):
     
     obj.set_payload((attach).read())
     encoders.encode_base64(obj)
-    obj.add_header('Content-Disposition',"attachment; filename= "+file)
+    obj.add_header('Content-Disposition',"attachment; filename= "+target_filename)
     
     message.attach(obj)
     attach.close()

@@ -1,19 +1,61 @@
 
-from flask import Blueprint, render_template, request, url_for, send_file
+from flask import Blueprint, render_template, request, url_for, send_file, redirect
 blueprint = Blueprint('royalroad_dl', __name__)
 
 
 from htmlmin import minify
 
-# TODO: Make this a cron job
-@blueprint.route("/download-book", methods=['POST'])
-def download_book():  
-    def gen_config(data):
-        url_hash="TEST"
 
+@blueprint.route("/download-bookfile/<id>", methods=['GET', 'POST'])
+def download_book_submit(id):
+    if request.method == 'POST':
+        filename = request.form.get('epub_filename', f"{id}.epub")
+        action = request.form.get('action')
+
+        print(request.form)
+
+        if action == 'Download':
+            return send_file(f'out/{id}.epub', download_name=filename)
+        elif action == 'SendToKindle':
+            from src.sendToKindle import main as sendToKindle
+
+            kindle_email = request.form.get("kindle_email")
+            # TODO: Some error message if missing
+    
+            print(f"Sending To Kindle, email: {kindle_email},  epub: {filename}")
+            sendToKindle(f'out/{id}.epub', receiver=kindle_email, target_filename=filename)
+
+        return f"Unknown action! {action}"
+
+    epub_filename = request.args.get('epub_filename', f"{id}.epub")
+    data = {
+        "epub_filename": {'label': "Epub File Name", 'text': epub_filename},
+        "kindle_email": {'label': "Kindle Email"}, # NOTE: This key is referred to in the html
+    }
+
+
+    sentders_email="torhoaakon@gmail.com"
+
+    kwargs = {
+            "TITLE": "Download Succeeded!",
+            "BOOK_ID": id,
+            "ACTION": url_for("royalroad_dl.download_book_submit", id=id),
+            "DATA": data,
+            "SENDERS_EMAIL": sentders_email,
+    }
+
+    return render_template("dowanload_success.html", **kwargs)
+
+
+
+
+# TODO: Make this a cron job
+@blueprint.route("/download-book/<id>", methods=['POST'])
+def download_book(id):  
+    def gen_config(id, data):
         # FOLDERNAME = hash_url
         config = {}
-        config['cache'] = f'cache/{url_hash}'
+        config['cache'] = f'cache/{id}'
         config['ignore_cache'] = False # data.get('ignore_cache', True)
 
         # config['callbacks'] = "books.RR_Template.cbs_base"
@@ -28,7 +70,8 @@ def download_book():
         book = { 
             "title": data["TITLE"],
             "author": data["AUTHOR"],
-            "epub_filename": 'out/' + data["OUTFILE"],
+            "epub_filename": f'out/{id}.epub',
+            # "epub_filename": 'out/' + data["OUTFILE"],
             "cover_image": data["COVER"],
             "css_filename": "webbook_dl/kindle.css",
             "entry_point": data["ENTRY"],
@@ -38,9 +81,11 @@ def download_book():
         config['book'] = book 
         return config
 
+    # Could be some hash perhaps
+
 
     from html_to_epub import Config, Book
-    config = Config(gen_config(request.form))
+    config = Config(gen_config(id, request.form))
     config.ignore_last_cache = True
 
     import os
@@ -54,15 +99,22 @@ def download_book():
     from books.RR_Template.cbs_base import Callbacks
     book = Book(config, Callbacks(config))
 
-    print(config)
-
     book.load_html()
 
     print(config.book.epub_filename)
 
     from ebooklib import epub
     epub.write_epub(config.book.epub_filename, book.generate_epub(), {})
-    
+ 
+
+    from RR_cnf_gen import foldername_from_title
+    epub_filename = "%s.epub" % foldername_from_title(book.title)
+
+
+    return redirect(url_for("royalroad_dl.download_book_submit", id=id, epub_filename=epub_filename))
+
+    return render_template("dowanload_success.html", **kwargs)
+
     return send_file(config.book.epub_filename)
 
 
@@ -104,8 +156,6 @@ def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
     print(result)
     return result
 
-
-
 @blueprint.route("/configure-book", methods=['GET', 'POST'])
 def book_config():
     data = {
@@ -113,13 +163,28 @@ def book_config():
         "AUTHOR"     : {'label': 'Author',         },
         "COVER"      : {'label': 'Cover',          },
         "ENTRY"      : {'label': 'First Chapeter', },
-        "OUTFILE"    : {'label': 'Epub File Name', },
+        #  "OUTFILE"    : {'label': 'Epub File Name', },
     }
 
     if request.method == 'POST':
         request_data = request.form
 
         fiction_page_url = request_data.get("fiction_page_url");
+        if not fiction_page_url: 
+            return "ERROR: No 'fiction_page_url' was privided. Go to <a href=\"" +  \
+                    url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
+
+        from urllib.parse import urlparse
+        
+        parsed_url = urlparse(fiction_page_url)
+        path_parts = parsed_url.path.split("/")
+        fiction_id = path_parts[2] if len(path_parts) > 2 else None
+
+        if not fiction_id: 
+            return "ERROR: Failed to parse 'fiction_page_url'. Go to <a href=\"" +  \
+                    url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
+
+        id = fiction_id;
 
         if fiction_page_url:
             request_data = royalroad_cofig_from_fiction_page(fiction_page_url)
@@ -136,6 +201,6 @@ def book_config():
             "DATA": data,
             "NO_REDIRECT_ONSUBMIT": False,
             # "ACTION": url_for("royalroad_dl.book_config"),
-            "ACTION": url_for("royalroad_dl.download_book"),
+            "ACTION": url_for("royalroad_dl.download_book", id=id),
     }
     return render_template('data_form.html', **kwargs)
