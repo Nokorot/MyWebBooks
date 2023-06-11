@@ -1,23 +1,55 @@
-<!-- form.html -->
-{% macro render_fields(data) %}
-  {% for key, entry in data.items() %}
+{% extends 'header.html' %}
 
-    {% if entry.data %}
-      <div class="group-fields">
-        <label for="{{ key }}">{{ entry.label }}:</label>
-        {{ render_fields(entry.data) }}
-      </div>
-    {% else %}
-      <div class="form-row">
-        <label class="label" for="{{ key }}">{{ entry.label }}:</label>
-        <input type="text" id="{{ key }}" name="{{ key }}" value="{{ entry.text }}">
-      </div>
-    {% endif %}
-  {% endfor %}
-{% endmacro %}
+{% block head %} 
+<title>{{ TITLE }}</title>
+{% endblock %} 
 
-<form action"{{ form_action }}" method="POST">
-  {{ render_fields(data) }}
+{% block body %}
+<h1>{{ TITLE }}</h1>
 
-  <button class="button" type="submit">Submit</button>
-</form>
+
+<div class="container">
+<p > {{ DERCRIPTION }} </p>
+<hr style="margin-bottom:20px"></hr>
+
+  {% import 'macros/render_fields.j2' as macros %}
+  <form action="{{ ACTION }}" method="POST"
+{% if NO_REDIRECT_ONSUBMIT  -%}
+      onsubmit="submitForm(event)"
+{%- endif %}>
+
+    {{ macros.render_fields(DATA) }}
+
+    <button class="button" type="submit">{{ SUBMIT | default('Submit') }}</button>
+  </form>
+
+<!-- Import and Export options -->
+{% if INCLUDE_IMPORT_EXPORT  %}
+{% include 'form_import_export.html' %}
+{% endif %}
+</div>
+
+{% if NO_REDIRECT_ONSUBMIT  %}
+<script>
+function submitForm(event) {
+    event.preventDefault(); // Prevent the default form submission behavior
+
+    var formData = new FormData(event.target);
+
+    // Create a new AJAX request
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "{{ ACTION }}", true);
+
+    // Handle the AJAX response
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            alert('Form submitted successfully');
+        } else {
+            alert('Form submission failed');
+        }
+    };
+    xhr.send(formData);
+}
+</script>
+{% endif %}
+{% endblock %}

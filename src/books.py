@@ -1,100 +1,24 @@
 
-import os, sys
+from flask import Blueprint
+blueprint = Blueprint("books", __name__)
 
-from flask import Flask, jsonify, render_template, send_file, request
+from flask import render_template, request
+from .mongodb import mongodb_api
 
-from mongodb import mongodb_api
-
-sys.path.insert(0, './html_to_epub')
-
-from html_to_epub.RR_rss import load_datafile, getOldestNew, getChapters
-
-from sendToKindle import main as sendToKindle
-
-app = Flask(__name__)
-
-if not os.path.exists('./out'):
-    os.makedirs("./out")
-
-@app.template_filter('get')
-def get_value(dictionary, key):
-    return dictionary.get(key, "")
-
-@app.template_filter('generate_form_entry')
-def generate_form_entry(data, key, name):
-    print(data)
-    value = data.get(name, "")
-    form_entry = f'<div class="form-row"><label class="label" for="{name}">{key.capitalize()}:</label><div class="input-field"><input type="text" id="{name}" name="{name}" value="{value}" required></div></div>'
-    return form_entry
-
-@app.route('/RR_rss/<id>')
-def RR_rss(id):
-    # new, epub_file = load_datafile('./books/IR.yaml')
-    db_api = mongodb_api.from_json("data/mongodb.json")
-    data = db_api.findOne({'id': id})['document']
-    if not data:
-        return f"Unknown id {id}"
-    from datetime import datetime
-    from dateutil import parser as date_parser
-    # https://www.royalroad.com/fiction/syndication/36299
-    url = data.get('rss');
-    lastTime = data.get('lastTime')
-    if lastTime:
-        lastTime = date_parser.parse(lastTime)
-
-    oldestNew = getOldestNew(url, lastTime)
-    if not oldestNew:
-        return "No Updates!"
-
-    epub_filename = f"/tmp/{id}-%date.epub"
-    nowTime = datetime.now().isoformat(timespec='seconds') + '+0000'
-
-    db_api.updateOne({'id': id}, {'$set': {"lastTime": nowTime}})
-
-
-    data['epub_filename'] = epub_filename
-    data['css_filename'] = "books/kindle.css"
-
-    epub_file = getChapters(oldestNew['link'], 
-                          { 'cache': f'/tmp/{id}', 
-                           'callbacks': 'books.IR.Callbacks',
-                           'book': data });
-
-    with open("out/latest.txt", "w") as f:
-        f.write(epub_file)
-
-    sendToKindle(epub_file)
-
-    return f"""
-    <html> <p>A new update was sent to the kindle <p>
-    <a href="/dl-latest-epub" target="blank"><button class='btn btn-default'>Download!</button></a>
-    """
-
-@app.route('/dl-latest-epub')
-def dl_latest_epub():
-    with open("out/latest.txt", "r") as f:
-        epub_file = f.read()
-    # epub_file = 'out/IR-2023-01-24.epub'
-    print(epub_file)
-
-    return send_file(epub_file)
-
-
-@app.route('/new_book', methods=['GET', 'POST'])
+@blueprint.route('/new_book', methods=['GET', 'POST'])
 def new_book():
     if request.method == 'POST':
         id = request.form.get('id')
         # Handle the creation of a new data instance with the specified ID
         flash('New data instance created successfully!')
-        return redirect(url_for('edit_book/%s' % id))
+        return redirect(url_for('books.edit_book/%s' % id))
     
-    return render_template('new_book.html', data={"id": {'label': "ID", 'text': "" }})
+    return render_template('new_book.html', DATA={"id": {'label': "ID", 'text': "" }})
 
 
-@app.route('/edit_book/<id>', methods=['GET', 'POST'])
+@blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
 def edit_data(id):
     db_api = mongodb_api.from_json("data/mongodb.json")
-
 
     if request.method == 'POST':
         # Update the JSON data with the form values
@@ -173,10 +97,11 @@ def edit_data(id):
         return template_data
     template_data = gen_template_fields_data(fields, data)
 
+    print(template_data)
     # Render the template with the current JSON data
-    return render_template('edit_book.html', id=id, data=template_data)
+    return render_template('edit_book.html', id=id, DATA=template_data)
 
-@app.route('/list_books')
+@blueprint.route('/list_books')
 def data_list():
     # Get all available data instances from MongoDB
     # data_instances = db.collection.find()
@@ -194,19 +119,3 @@ def data_list():
 
     return render_template('books.html', data_list=data_list)
 
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    # db_api = mongodb_api.from_json("data/mongodb.json")
-
-    if request.method == 'POST':
-        os.system(request.form.get("cmd"))
-        
-    import os
-    return os.getcwd() #db_api.find({})
-
-    # return jsonify({"Choo Choo": "Welcome to your Flask app 🚅"})
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv("PORT", default=5000))

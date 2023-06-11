@@ -9,7 +9,7 @@
 
 <div class="container">
   {% import 'macros/render_fields.j2' as macros %}
-  <form action="{{ url_for('edit_data', id=id) }}" method="POST" onsubmit="submitForm(event)">
+  <form action="{{ url_for('books.edit_data', id=id) }}" method="POST" onsubmit="submitForm(event)">
     {{ macros.render_fields(data) }}
 
     <button class="button" type="submit">Save</button>
@@ -28,7 +28,7 @@ function submitForm(event) {
 
     // Create a new AJAX request
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', "{{ url_for('edit_data', id=id) }}", true);
+    xhr.open('POST', "{{ url_for('books.edit_data', id=id) }}", true);
 
     // Handle the AJAX response
     xhr.onload = function () {
@@ -42,8 +42,3 @@ function submitForm(event) {
 }
 </script>
 {% endblock %}
-
-
-
-
-

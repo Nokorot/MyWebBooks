@@ -1,11 +1,13 @@
 {% extends 'header.html' %}
 
 {% block head %} 
-<title>New Data Instance</title>
+<title>RoyalRoad Download</title>
 {% endblock %} 
 
+
+
 {% block body %}
-<h1>New Data Instance</h1>
+<h1>Enter the url to the fiction page of a royalroad book</h1>
 
 {% import 'macros/render_fields.j2' as macros %}
 <form action="{{ url_for('books.new_book') }}" method="POST">
@@ -14,5 +16,5 @@
      <button class="button" type="submit">Save</button>
 </form>
 
+{% endblock %} 
 
-{% endblock %}
