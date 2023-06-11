@@ -5,33 +5,15 @@ blueprint = Blueprint('royalroad_dl', __name__)
 
 from htmlmin import minify
 
-"""
-cache: './cache/html/<+FOLDERNAME+>'
-callbacks: 'books.<+FOLDERNAME+>.cbs.Callbacks'
-book:
-    title: <+TITLE+> 
-    author: <+AUTHOR+> 
-    epub_filename: out/<+FOLDERNAME+>.epub
-    cover_image: <+COVER_IMAGE+>
-    css_filename: 'kindle.css'
-    entry_point: <+ENTRY_POINT+>
-    chapter:
-        section_css_selector: 'div.fic-header h1.font-white'
-        title_css_selector: 'div.fic-header h1.font-white'
-        text_css_selector: 'div.chapter-inner'
-        next_chapter_css_selector: 'div.col-md-offset-4 a.btn'
-    include_images: True
-"""
-
-
+# TODO: Make this a cron job
 @blueprint.route("/download-book", methods=['POST'])
-def download_book():
+def download_book():  
     def gen_config(data):
         url_hash="TEST"
 
         # FOLDERNAME = hash_url
         config = {}
-        config['cache'] = 'cache/{url_hash}'
+        config['cache'] = f'cache/{url_hash}'
         config['ignore_cache'] = False # data.get('ignore_cache', True)
 
         # config['callbacks'] = "books.RR_Template.cbs_base"
@@ -59,6 +41,7 @@ def download_book():
 
     from html_to_epub import Config, Book
     config = Config(gen_config(request.form))
+    config.ignore_last_cache = True
 
     import os
     os.makedirs(config.cache, exist_ok=True)
@@ -89,10 +72,38 @@ def head():
             "TITLE": "RoyalRoad Book Download",
             "DERCRIPTION": "Enter the url to the fiction page of a royalroad book",
             "SUBMIT": "Submit",
-            "DATA": {'url': {'label': 'Url', 'type': 'str', 'text': ''}},
+            "DATA": {'fiction_page_url': {'label': 'Url', 'type': 'str', 'text': ''}},
             "ACTION": url_for("royalroad_dl.book_config"),
     }
     return render_template('data_form.html', **kwargs)
+
+
+def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
+    from html_to_epub.util import Network
+    from lxml.cssselect import CSSSelector
+
+    from RR_cnf_gen import first_match, foldername_from_title
+
+    base_url = "https://www.royalroad.com"
+    cache_dir = "./cache/RR"
+    import os
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    cache_filename = Network.cache_filename(cache_dir, url)
+
+
+    tree = Network.load_and_cache_html(url, cache_filename, ignoe_cache)
+
+    result = {}
+    result['TITLE']   = first_match(tree, "div.fic-header h1").text;
+    result['AUTHOR']  = first_match(tree, "div.fic-header h4 a").text;
+    result['COVER']   = first_match(tree, "div.fic-header img").get('src').split('?')[0];
+    result['ENTRY']   = base_url + first_match(tree, "div.portlet table a").get('href').split('?')[0];
+    result['OUTFILE'] = foldername_from_title(result['TITLE'])
+
+    print(result)
+    return result
+
 
 
 @blueprint.route("/configure-book", methods=['GET', 'POST'])
@@ -106,12 +117,21 @@ def book_config():
     }
 
     if request.method == 'POST':
+        request_data = request.form
+
+        fiction_page_url = request_data.get("fiction_page_url");
+
+        if fiction_page_url:
+            request_data = royalroad_cofig_from_fiction_page(fiction_page_url)
+
         for key in data.keys():
-            data[key]['text'] = request.form.get(key)
+            value = request_data.get(key)
+            if value: 
+                data[key]['text'] = value
 
     kwargs = {
             "TITLE": "RoyalRoad Book Configuration",
-            "DERCRIPTION": "Please check that the following configuration is correct",
+            "DERCRIPTION": "Please check that the following configuration is correct (Note that after clicking, you just have to wait, sorry for the lack of visual indication)",
             "SUBMIT": "Download",
             "DATA": data,
             "NO_REDIRECT_ONSUBMIT": False,

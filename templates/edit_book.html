@@ -1,0 +1,44 @@
+{% extends 'header.html' %}
+
+{% block head %} 
+<title>Edit Data</title>
+{% endblock %} 
+
+{% block body %}
+<h1>Edit Data</h1>
+
+<div class="container">
+  {% import 'macros/render_fields.j2' as macros %}
+  <form action="{{ url_for('books.edit_data', id=id) }}" method="POST" onsubmit="submitForm(event)">
+    {{ macros.render_fields(data) }}
+
+    <button class="button" type="submit">Save</button>
+  </form>
+
+<!-- Import and Export options -->
+{% include 'form_import_export.html' %}
+
+</div>
+
+<script>
+function submitForm(event) {
+    event.preventDefault(); // Prevent the default form submission behavior
+
+    var formData = new FormData(event.target);
+
+    // Create a new AJAX request
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "{{ url_for('books.edit_data', id=id) }}", true);
+
+    // Handle the AJAX response
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            alert('Form submitted successfully');
+        } else {
+            alert('Form submission failed');
+        }
+    };
+    xhr.send(formData);
+}
+</script>
+{% endblock %}
