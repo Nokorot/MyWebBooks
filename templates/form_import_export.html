@@ -47,8 +47,8 @@ function onInputFileLoad(fileContent, format) {
     
     // console.log(importedData);
  
-{% macro import_fields(data, depth) -%}
-  {% for key, entry in data.items() -%}
+{% macro import_fields(DATA, depth) -%}
+  {% for key, entry in DATA.items() -%}
     {% if entry.data %}impData_{{ depth+1 }} = impData_{{ depth }}["{{ key }}"]
     {{ import_fields(entry.data, depth+1) }}{% else %}document.getElementById('{{ key }}').value = impData_{{ depth }}["{{ key }}"] || ''; 
     {% endif %}
@@ -57,7 +57,7 @@ function onInputFileLoad(fileContent, format) {
 
     // Update form fields with imported data
     impData_0 = importedData;
-    {{ import_fields(data, 0) }}
+    {{ import_fields(DATA, 0) }}
     
 
     console.log('Data imported successfully:', importedData);
@@ -80,15 +80,15 @@ document.getElementById('import_file').addEventListener('change', handleImportFi
 function exportData() {
     const exportFormat = document.getElementById('export_format').value;
 
-{% macro export_fields(data) -%}
-  {% for key, entry in data.items() -%}
+{% macro export_fields(DATA) -%}
+  {% for key, entry in DATA.items() -%}
     {% if entry.data %}
         "{{ key }}": { {{ export_fields(entry.data) }} 
         }, {% else %} 
             "{{ key }}": document.getElementById('{{ key }}').value || '', {% endif %}
   {%- endfor %}
 {%- endmacro %}
-    const formData = { {{ export_fields(data) }} };
+    const formData = { {{ export_fields(DATA) }} };
 
     let exportData;
     if (exportFormat === 'yaml') {

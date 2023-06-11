@@ -90,7 +90,7 @@ def head():
             "DERCRIPTION": "Enter the url to the fiction page of a royalroad book",
             "SUBMIT": "Submit",
             "DATA": {'url': {'label': 'Url', 'type': 'str', 'text': ''}},
-            "ACTION": url_for("royalroad_dl.book-config"),
+            "ACTION": url_for("royalroad_dl.book_config"),
     }
     return render_template('data_form.html', **kwargs)
 
@@ -118,5 +118,4 @@ def book_config():
             # "ACTION": url_for("royalroad_dl.book_config"),
             "ACTION": url_for("royalroad_dl.download_book"),
     }
-    print(kwargs["ACTION"])
     return render_template('data_form.html', **kwargs)
