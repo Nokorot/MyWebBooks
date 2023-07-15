@@ -12,7 +12,7 @@ def main(file, receiver=None, target_filename=None):
     if not receiver:
         return
     sender='torhoaakon@gmail.com'
-    password = "igexqbjdzyfdgvyz" # os.environ.get("GMAIL_PASSWORD")
+    password = os.environ.get("GMAIL_PASSWORD")
 
 
     message = constructMessage(sender, receiver, file, target_filename)
