@@ -7,7 +7,7 @@
 {% block body %}
     <h1>Book Data List</h1>
 
-    <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button">New Book Instance</a>
+    <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
 
     <div class="container">
         {% for data in data_list %}

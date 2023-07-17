@@ -3,15 +3,30 @@
 <head>
  {% block head %}    
  {% endblock %}    
+    <meta charset = "UTF-8">
+    <!--icon code-->
+    <script src="https://kit.fontawesome.com/70a51386c2.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_dark.css') }}">
-    
+    <!-- icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
     <style>
     .toggle-dark-mode {
         position: absolute;
         top: 10px;
         right: 10px;
         z-index: 9999;
+    }
+    .new-data-instance-button {
+        background-color: #199319;
+        color: white;
+        padding: 15px 25px;
+        text-decoration: none;
+        border-radius: 8px;
+    }
+    .new-data-instance-button:hover {
+        background-color: #223094;
     }
     </style>
 </head>

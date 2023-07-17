@@ -4,6 +4,7 @@ blueprint = Blueprint("books", __name__)
 
 from flask import render_template, request, url_for
 from .mongodb import mongodb_api
+import json 
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
 def new_book():
@@ -64,7 +65,6 @@ def edit_data(id):
     if not data:
         data = {'chapter':{}}
     
-    import json
     with open("data/book_data.json", 'r') as f:
         fields = json.load(f)
 
@@ -105,7 +105,9 @@ def data_list():
     # data_instances = db.collection.find()
     db_api = mongodb_api.from_json("data/mongodb.json")
     data_instances = db_api.find({})['documents']
-    print(data_instances)
+    #DEBUG
+    #print('data instances: ')
+    #print(json.dumps(data_instances, indent = 4))
 
     # Prepare the data list to pass to the template
     data_list = []
