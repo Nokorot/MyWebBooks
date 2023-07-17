@@ -65,6 +65,7 @@ def edit_data(id):
     if not data:
         data = {'chapter':{}}
     
+    import json
     with open("data/book_data.json", 'r') as f:
         fields = json.load(f)
 
@@ -113,7 +114,7 @@ def data_list():
     data_list = []
     for data in data_instances:
         data_list.append({
-            'id': data['id'],
+            'id': data['_id'],
             'title': data['title']
         })
 

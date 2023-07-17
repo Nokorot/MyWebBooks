@@ -12,7 +12,7 @@
     <div class="container">
         {% for data in data_list %}
         <div class="list-item">
-              <a href="{{ url_for('books.edit_data', id=data['id']) }}">{{ data['title'] }}</a>
+              <a href="{{ url_for('books.edit_data', id=data['_id']) }}">{{ data['title'] }}</a>
         </div>
         {% endfor %}
     </div>
