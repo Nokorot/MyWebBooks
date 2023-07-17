@@ -12,7 +12,11 @@
     <div class="container">
         {% for data in data_list %}
         <div class="list-item">
+            <form action="{{ url_for('books.delete_book', id = data['_id']) }}" method="post">
               <a href="{{ url_for('books.edit_data', id=data['_id']) }}">{{ data['title'] }}</a>
+              <input type="text" name = "del" hidden = 'true' value="{{ data['_id'] }}">
+              <button class = 'delete-button fa-solid fa-trash-can' name="delete" type="submit"> Delete</button>
+            </form>
         </div>
         {% endfor %}
     </div>
