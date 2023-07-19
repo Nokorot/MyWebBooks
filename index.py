@@ -1,5 +1,5 @@
 import os, sys
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_htmlmin import HTMLMIN
 
 sys.path.append("./webbook_dl/")
@@ -49,8 +49,29 @@ def index():
         output = result.stdout
         
         return jsonify({'output': output})
+    
+    data = {
+        "Username": 
+        {
+            'label': "Username",
+            'text': "username" 
+        },
+        "Password":
+        {
+            "label": "Password",
+            "text": "password",
+            "field_type": "password"
+        }
+    }
+    kwargs = {
+            "TITLE": "LOGIN",
+            "DERCRIPTION": "Please enter your account information:",
+            "SUBMIT": "Submit",
+            "DATA": data,
+            "ACTION": "",
+    }
 
-    return jsonify({"Choo Choo": "Welcome to your Flask app 🚅"})
+    return render_template('forms/login_form.html', **kwargs)
 
 from src.books import blueprint
 app.register_blueprint(blueprint, url_prefix='/books')
