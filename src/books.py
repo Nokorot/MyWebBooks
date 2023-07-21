@@ -3,7 +3,7 @@ from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
 from flask import render_template, request, url_for, redirect
-from .mongodb import mongodb_api
+from bson.objectid import ObjectId
 import json 
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
@@ -28,6 +28,7 @@ def new_book():
 
 @blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
 def edit_data(id):
+    id = ObjectId(id)
     db_api = mongodb_api.from_json("data/mongodb.json")
 
     if request.method == 'POST':
@@ -122,7 +123,8 @@ def data_list():
 
 @blueprint.route('/delete_book/<id>', methods = ['POST'])
 def delete_book(id):
+    id = ObjectId(id)
     db = mongodb_api.from_json("data/mongodb.json")
+    db.deleteMany({"id": id})
     import json
-    print(json.dumps(db.find({}), indent = 4))
     return redirect('../list_books')

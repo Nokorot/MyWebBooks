@@ -1,6 +1,7 @@
 import os, sys
 from flask import Flask, jsonify, request, render_template
 from flask_htmlmin import HTMLMIN
+import subprocess
 
 sys.path.append("./webbook_dl/")
 
@@ -34,6 +35,7 @@ def generate_form_entry(data, key, name):
     return form_entry
 
 
+# login page
 @app.route('/', methods=['GET', 'POST'])
 def index():
 
@@ -72,6 +74,58 @@ def index():
     }
 
     return render_template('forms/login_form.html', **kwargs)
+
+#register page:
+@app.route('/register', methods = ['GET', 'POST'])
+def register():
+    if(request.method == "POST"):
+        output = subprocess.check_output(['node', './static/register.mjs'], text = True)
+
+    data = {
+        "Username": 
+        {
+            'label': "Username",
+            'text': "username" 
+        },
+        "Password":
+        {
+            "label": "Password",
+            "text": "password",
+            "field_type": "password"
+        }
+    }
+    kwargs = {
+            "TITLE": "REGISTER",
+            "DERCRIPTION": "Please enter your account information:",
+            "SUBMIT": "Submit",
+            "DATA": data,
+            "ACTION": "",
+    }
+    return render_template("forms/register_form.html", **kwargs)
+
+@app.route('/confirm_email', methods= ['GET', 'POST'])
+def confirm_email():
+    return render_template("confirm_email.html")
+
+@app.route('/reset_password', methods = ['GET', 'POST'])
+def reset_password():
+    data = {
+        "New Password":
+        {
+            "label": "Password",
+            "text": "password",
+            "field_type": "password"
+        }
+    }
+   
+    kwargs = {
+            "TITLE": "Password Reset",
+            "DERCRIPTION": "Please enter your new password:",
+            "SUBMIT": "Submit",
+            "DATA": data,
+            "ACTION": "",
+    }
+    return render_template("forms/reset_password.html", **kwargs)
 
 from src.books import blueprint
 app.register_blueprint(blueprint, url_prefix='/books')

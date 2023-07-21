@@ -14,4 +14,4 @@ pip-delete-this-directory.txt
 
 # Environments
 .venv
-
+.users
