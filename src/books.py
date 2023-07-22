@@ -2,9 +2,10 @@
 from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
-from flask import render_template, request, url_for, redirect
+from flask import render_template, request, url_for, redirect, g, session
 from bson.objectid import ObjectId
 import json 
+from .mongodb_api_1 import *
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
 def new_book():
@@ -102,21 +103,18 @@ def edit_data(id):
     return render_template('data_form.html', **kwargs)
 
 @blueprint.route('/list_books')
-def data_list():
+def list_books():
     # Get all available data instances from MongoDB
     # data_instances = db.collection.find()
-    db_api = mongodb_api.from_json("data/mongodb.json")
-    data_instances = db_api.find({})['documents']
-    #DEBUG
-    #print('data instances: ')
-    #print(json.dumps(data_instances, indent = 4))
+    
+    books = find('rr', 'books', {'owner_id': g.user['_id']})
 
     # Prepare the data list to pass to the template
     data_list = []
-    for data in data_instances:
+    for book in books:
         data_list.append({
-            '_id': data['_id'],
-            'title': data['title']
+            '_id': book['_id'],
+            'title': book['title']
         })
 
     return render_template('books.html', data_list=data_list)
