@@ -5,6 +5,21 @@
 {% endblock %} 
 
 {% block body %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %} 
+        <ul class = 'flashes'>
+            {% for message in messages %} 
+                <li>{{message}}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+
+{% if g.user %}
+<a href=" {{url_for('logout')}} " class = 'logout-button fa'>LOGOUT</a>
+{% endif %}
+
+
     <h1>Book Data List</h1>
 
     <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>

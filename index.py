@@ -1,3 +1,4 @@
+import functools
 import os, sys
 from flask import Flask, jsonify, request, session, g, render_template, flash, redirect, url_for
 from flask_htmlmin import HTMLMIN
@@ -41,7 +42,7 @@ def generate_form_entry(data, key, name):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if(g.user):
-        redirect(url_for('books.list_books'))
+        return redirect(url_for('books.list_books'))
 
     if request.method == 'POST':
         username = request.form['username']
@@ -177,6 +178,13 @@ def reset_password():
             "ACTION": "",
     }
     return render_template("forms/reset_password.html", **kwargs)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
 
 from src.books import blueprint
 app.register_blueprint(blueprint, url_prefix='/books')

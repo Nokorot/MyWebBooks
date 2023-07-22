@@ -4,7 +4,6 @@
   "cover_image": "Cover Image",
   "entry_point": "Entry Point",
   "rss"        : "RSS url",   
-  "lastTime"   : "Time of Last RSS",
   "chapter": { "label": "Chapeter CSS Selectors",
       "data": {
           "section_css_selector"      : "Section",
