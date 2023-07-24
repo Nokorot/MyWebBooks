@@ -11,3 +11,5 @@ cssselect==1.2.0
 ruamel.yaml==0.17.21
 pymongo==3.11
 dnspython==2.3
+dotenv==0.0.5
+pymongo==3.11.0
