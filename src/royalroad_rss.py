@@ -1,13 +1,16 @@
 
-from flask import Blueprint, render_template, request, send_file
+from flask import Blueprint, render_template, request, send_file, url_for
 blueprint = Blueprint('royalroad_rss', __name__)
 
 
 from html_to_epub.RR_rss import load_datafile, getOldestNew, getChapters
 from src.sendToKindle import main as sendToKindle
 
+from .mongodb import mongodb_api
+
 @blueprint.route('/RR_rss/<id>')
 def RR_rss(id):
+
     # new, epub_file = load_datafile('./books/IR.yaml')
     db_api = mongodb_api.from_json("data/mongodb.json")
     data = db_api.findOne({'id': id})['document']
@@ -32,29 +35,48 @@ def RR_rss(id):
 
 
     data['epub_filename'] = epub_filename
-    data['css_filename'] = "books/kindle.css"
+    data['css_filename'] = "webbook_dl/kindle.css"
 
     epub_file = getChapters(oldestNew['link'], 
                           { 'cache': f'/tmp/{id}', 
-                           'callbacks': 'books.IR.Callbacks',
-                           'book': data });
+                            'callbacks': 'webbook_dl.html_to_epub.callbacks.Callbacks',
+                            'book': data });
 
-    with open("out/latest.txt", "w") as f:
-        f.write(epub_file)
+    db_info = {
+        "dataSource" : "NokoCluster",
+        "database"   : "html_to_epub",
+        "collection" : "rss-state"
+    }
+
+    rss_state_db_api = mongodb_api.from_json("data/mongodb.json", db_info)
+    # with open("out/latest.txt", "w") as f:
+    #     f.write(epub_file)
+    rss_state_db_api.updateOne({'id': "latest"}, {'id': "latest", 'filepath': epub_file}, upsert=True);
 
     sendToKindle(epub_file)
 
     return f"""
     <html> <p>A new update was sent to the kindle <p>
-    <a href="/{url_for('royalroad_rss.dl-latest-epub')}" target="blank"><button class='btn btn-default'>Download!</button></a>
+    <a href="/{url_for('royalroad_rss.dl_latest_epub')}" target="blank"><button class='btn btn-default'>Download!</button></a>
     """
 
 @blueprint.route('/dl-latest-epub')
 def dl_latest_epub():
-    with open("out/latest.txt", "r") as f:
-        epub_file = f.read()
-    # epub_file = 'out/IR-2023-01-24.epub'
-    print(epub_file)
+    db_info = {
+        "dataSource" : "NokoCluster",
+        "database"   : "html_to_epub",
+        "collection" : "rss-state"
+    }
+
+    rss_state_db_api = mongodb_api.from_json("data/mongodb.json", db_info)
+    data = rss_state_db_api.findOne({'id': "latest"})['document']
+
+    epub_file = data['filepath']
+
+    # with open("out/latest.txt", "r") as f:
+    #     epub_file = f.read()
+    # # epub_file = 'out/IR-2023-01-24.epub'
+    # print(epub_file)
 
     return send_file(epub_file)
 

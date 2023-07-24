@@ -14,10 +14,12 @@ class mongodb_api():
         }
 
     @staticmethod
-    def from_json(filename):
+    def from_json(filename, db_info=None):
         with open(filename, 'r') as f:
             data = json.load(f)
-        return mongodb_api(data['base_url'], data['db_info'], data["api_key"])
+        if db_info == None:
+            db_info = data['db_info']
+        return mongodb_api(data['base_url'], db_info, data["api_key"])
     
     def _request(self, action, data):
         payload = json.dumps({**self.db_info, **data})
