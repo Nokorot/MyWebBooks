@@ -5,8 +5,12 @@ body.dark-mode {
 }
 
 .dark-mode .container {
-    background-color: #333;
+    background-color: #ed1111;
     border: 1px solid #555;
+}
+
+.dark-mode .list-item {
+    background-color: #c0c0da;
 }
 
 .dark-mode h1 {

@@ -9,7 +9,7 @@
       <div class="form-row">
           <label class="label " for="{{ key }}">{{ entry.label }}:</label>
           {% if not entry.type or entry.type == "str"  %}
-        <input type="text" id="{{ key }}" name="{{ key }}" value="{{ entry.text | default('') }}">
+        <input type="{{ entry.field_type | default('text') }}"  {% if entry.hidden %} hidden="true" {% endif %} id="{{ key }}" name="{{ entry.name }}" value="{{ entry.text | default('') }}">
           {% elif entry.type == "bool" %}
         <label class="switch">
         <input type="checkbox" id="{{ key }}" name="{{ key }}" checked="{{ entry.value }}">

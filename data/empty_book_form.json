@@ -1,0 +1,15 @@
+{
+  "title"      : "Title",
+  "author"     : "Author",
+  "cover_image": "Cover Image",
+  "entry_point": "Entry Point",
+  "rss"        : "RSS url",   
+  "section_css_selector"      : "Section",
+  "title_css_selector"        : "Title",
+  "text_css_selector"         : "Text",
+  "next_chapter_css_selector" : "Next Button",
+  "include_images": { 
+      "label": "Include Images", 
+      "type": "bool"
+  }
+}

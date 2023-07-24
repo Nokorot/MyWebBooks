@@ -21,6 +21,9 @@
     {{ macros.render_fields(DATA) }}
 
     <button class="button" type="submit">{{ SUBMIT | default('Submit') }}</button>
+    
+    {% block form_extension %}
+    {% endblock %}
   </form>
 
 <!-- Import and Export options -->

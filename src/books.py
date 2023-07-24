@@ -2,99 +2,120 @@
 from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
-from flask import render_template, request, url_for, redirect
-from .mongodb import mongodb_api
+from datetime import datetime
+
+from flask import render_template, request, url_for, redirect, g, session, flash
+from bson.objectid import ObjectId
+
+from src.mongodb_api_1 import *
+from src.auth import login_required
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
+@login_required
 def new_book():
     if request.method == 'POST':
-        id = request.form.get('id')
-        # Handle the creation of a new data instance with the specified ID
+        title = request.form.get('title')
+        author = request.form.get('author')
+        cover_image = request.form.get('cover_image')
+        entry_point = request.form.get('entry_point')
+        rss = request.form.get('rss')
+        section_css_selector = request.form.get('section_css_selector')
+        title_css_selector = request.form.get('title_css_selector')
+        paragraph_css_selector = request.form.get('paragraph_css_selector')
+        next_chapter_css_selector = request.form.get('next_chapter_css_selector')
+
+        insertOne('rr', 'books',
+            {
+                #added by the system
+                'owner_id' : g.user['_id'],
+                'last_update' : datetime.now(),
+                #collected from form
+                'title' : title,
+                'author' : author,
+                'cover_image' : cover_image,
+                'entry_point' : entry_point,
+                'rss' : rss,
+                'section_css_selector' : section_css_selector,
+                'title_css_selector' : title_css_selector,
+                'paragraph_css_selector' : paragraph_css_selector,
+                'next_chapter_css_selector' : next_chapter_css_selector
+            }
+        )
         flash('New data instance created successfully!')
-        return redirect(url_for('books.edit_book/%s' % id))
+        
+        #return redirect(url_for('books.edit_book/%s' % id))
  
-    data = {"id": {'label': "ID", 'text': "" }}
+    data = {
+        "title": {'label': "Title", "name": "title", 'text': "" },
+        "author": {'label': "author", "name": "author", 'text': "" },
+        "cover_image": {'label': "Cover Image URL", "name": "cover_image", 'text': "" },
+        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'text': "royalroad.com" },
+        "rss": {'label': "RSS URL", 'name': "rss", 'text': "" },
+        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'text': "" },
+        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'text': "" },
+        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'text': "" },
+        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'text': "" }
+    }
     kwargs = {
             "TITLE": "New Book",
             "DERCRIPTION": "",
             "SUBMIT": "Submit",
             "DATA": data,
-            "ACTION": url_for('books.new_book'),
+            "ACTION": ""
     }
 
     return render_template('data_form.html', **kwargs)
 
 
 @blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
+@login_required
 def edit_data(id):
-    db_api = mongodb_api.from_json("data/mongodb.json")
+    id = ObjectId(id)
 
     if request.method == 'POST':
         # Update the JSON data with the form values
+
         import json
-        with open("data/book_data.json", 'r') as f:
-            fields = json.load(f)
-
-        def gen_data_from_form(fields, form):
-            data = {}
-            for key, entry in fields.items():
-                print(key, type(entry))
-                if type(entry) in [str, bool]:
-                    data[key] = form.get(key)
-                elif type(entry) == dict:
-                    if 'data' in entry:
-                        data[key] = gen_data_from_form(entry['data'], form)
-            return data
-        data = gen_data_from_form(fields, request.form)
-        data['id'] = id
-
-        # Update or insert the data into the MongoDB collection
-        # collection.replace_one({}, data, upsert=True)
-        # collection.update_one({'id': id}, {'$set': data}, upsert=True)
-        db_api.updateOne({'id': id}, {'$set': data}, upsert=True)
+        with open("data/empty_book_form.json", 'r') as f:
+            book_form_template = json.load(f)
+        form = request.form
         
+        for key in book_form_template.keys():
+            book_form_template[key] = form.get(key)
+        
+        updateOne('rr','books', {'_id': id}, book_form_template)
+        flash("data updated!")
         return 'Data updated successfully.'
 
-    # Retrieve the data from MongoDB
-    data = db_api.findOne({'id': id})['document']
-    if not data:
-        data = {'chapter':{}}
-    
-    import json
-    with open("data/book_data.json", 'r') as f:
-        fields = json.load(f)
 
-    def gen_template_fields_data(fields, data):
-        template_data = {}
-        for key, entry in fields.items():
-            print("HERE", key, type(entry))
-            if type(entry) == str:
-                value = data.get(key)
-                # TODO: Check type of value
-                template_data[key] = {'label': entry, 'type': "str", 'text': value}
-            elif type(entry) == dict:
-                if not 'label' in entry:
-                    entry.label = ''
-                if 'data' in entry:
-                    entry['data'] = gen_template_fields_data(entry['data'], data.get(key))
-                template_data[key] = entry
-        return template_data
-    template_data = gen_template_fields_data(fields, data)
+    # Retrieve the data from MongoDB
+    book = findOne('rr', 'books', {'_id': id})
+
+    data = {
+        "title": {'label': "Title", "name": "title"},
+        "author": {'label': "author", "name": "author"},
+        "cover_image": {'label': "Cover Image URL", "name": "cover_image"},
+        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'text': "royalroad.com" },
+        "rss": {'label': "RSS URL", 'name': "rss", 'text': "" },
+        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'text': "" },
+        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'text': "" },
+        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'text': "" },
+        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'text': "" }
+    }
+    for key, value in data.items():
+        data[key]["text"] = book[key]
 
 
     kwargs = {
             "TITLE": "Edit Data",
             "DERCRIPTION": "",
             "SUBMIT": "Save",
-            "DATA": template_data,
+            "DATA": data,
             "NO_REDIRECT_ONSUBMIT": True,
             "INCLUDE_IMPORT_EXPORT": True,
             "ACTION": url_for('books.edit_data', id=id),
     }
-
-    print(template_data)
     return render_template('data_form.html', **kwargs)
-
 
 @blueprint.route('/download_book/<id>')
 def download_book(id):  
@@ -236,22 +257,32 @@ def book_config():
     }
     return render_template('data_form.html', **kwargs)
 
-@blueprint.route('/list_books')
-def data_list():
+@blueprint.route('/list_books', methods = ['GET'])
+def list_books():
     # Get all available data instances from MongoDB
     # data_instances = db.collection.find()
-    db_api = mongodb_api.from_json("data/mongodb.json")
-    data_instances = db_api.find({})['documents']
-    print(data_instances)
+    books_list = []
 
-    # Prepare the data list to pass to the template
-    data_list = []
-    for data in data_instances:
-        data_list.append({
-            'id': data['id'],
-            'title': data['title']
-        })
+    if g.user:
+        books = find('rr', 'books', {'owner_id': g.user['_id']})
+
+        # Prepare the data list to pass to the template
+        for book in books:
+            books_list.append({
+                '_id': book['_id'],
+                'title': book['title']
+            })
+    else:
+        flash('Not logged in!')
+
+    return render_template('books.html', data_list=books_list)
+
+@blueprint.route('/delete_book/<id>', methods = ['POST'])
+@login_required
+def delete_book(id):
+    id = ObjectId(id)
+    deleteOne('rr', 'books', {"_id": id})
+    return redirect('../list_books')
 
 
-    return render_template('books.html', data_list=data_list)
 

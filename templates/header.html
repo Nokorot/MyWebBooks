@@ -3,17 +3,14 @@
 <head>
  {% block head %}    
  {% endblock %}    
+    <meta charset = "UTF-8">
+    <!--icon code-->
+    <script src="https://kit.fontawesome.com/70a51386c2.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_dark.css') }}">
-    
-    <style>
-    .toggle-dark-mode {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 9999;
-    }
-    </style>
+    <!-- icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='initial.css')}}">
 </head>
 <body>
     <!-- Rounded switch -->
@@ -21,7 +18,19 @@
       <input type="checkbox" id="dark-mode-switch">
       <span class="slider round"></span>
     </label>
-
+    <!-- logout button -->
+    {% if g.user %}
+    <a href=" {{url_for('logout')}} " class = 'logout-button fa'>LOGOUT</a>
+    {% endif %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %} 
+            <ul class = 'flashes'>
+                {% for message in messages %} 
+                    <li>{{message}}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     {% block body %}
     {% endblock %}
 </body>

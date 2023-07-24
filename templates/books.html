@@ -5,14 +5,25 @@
 {% endblock %} 
 
 {% block body %}
+
+
+
+
+
     <h1>Book Data List</h1>
 
-    <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button">New Book Instance</a>
+    <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
 
     <div class="container">
         {% for data in data_list %}
         <div class="list-item">
-              <a href="{{ url_for('books.edit_data', id=data['id']) }}">{{ data['title'] }}</a>
+            <form action="{{ url_for('books.delete_book', id = data['_id']) }}" method="post">
+              <a href="{{ url_for('books.edit_data', id=data['_id']) }}">{{ data['title'] }}</a>
+              <input type="text" name = "del" hidden = 'true' value="{{ data['_id'] }}">
+              <a href="{{ url_for('books.delete_book', id = data['_id']) }}" class = 'delete-button fa-solid fa-trash-can'>Delete</a>
+              <a href="{{ url_for('royalroad_dl.head') }}"> Send To Kindle </a>
+              <button class = 'delete-button fa-solid fa-trash-can' name="delete" type="submit"> Delete</button>
+            </form>
         </div>
         {% endfor %}
     </div>

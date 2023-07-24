@@ -1,0 +1,8 @@
+{% extends 'data_form.html' %}
+{% block head %} 
+<!--script type="module" src = "{{ url_for('static', filename = 'login.mjs') }}"></script-->
+<script src="https://unpkg.com/realm-web@2.0.0"></script>
+{% endblock %}
+{% block form_extension %}
+<button class="button" type = "button" onclick="window.location.href='{{ url_for("register") }}';">Sign Up</button>
+{% endblock %} 
