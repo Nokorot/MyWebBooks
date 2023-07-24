@@ -5,7 +5,7 @@ body.dark-mode {
 }
 
 .dark-mode .container {
-    background-color: #ed1111;
+    background-color: #444;
     border: 1px solid #555;
 }
 
