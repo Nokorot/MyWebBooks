@@ -11,7 +11,6 @@ load_dotenv()
 MONGODB_URI = os.environ['MONGODB_URI']
 
 try:
-  print("connecnting to client")
   client = pymongo.MongoClient(MONGODB_URI)
   print("connected")
   

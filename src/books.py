@@ -27,7 +27,7 @@ def new_book():
         insertOne('rr', 'books',
             {
                 #added by the system
-                'owner_id' : g.user['_id'],
+                'owner' : g.user['userinfo']['name'],
                 'last_update' : datetime.now(),
                 #collected from form
                 'title' : title,
@@ -69,8 +69,11 @@ def new_book():
 
 @blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
 @login_required
-def edit_data(id):
+def edit_book(id):
     id = ObjectId(id)
+    book = findOne('rr', 'books', {'_id': id})
+    if book['owner'] != g.user['userinfo']['name']:
+        redirect(url_for('books.list_books'))
 
     if request.method == 'POST':
         # Update the JSON data with the form values
@@ -113,7 +116,7 @@ def edit_data(id):
             "DATA": data,
             "NO_REDIRECT_ONSUBMIT": True,
             "INCLUDE_IMPORT_EXPORT": True,
-            "ACTION": url_for('books.edit_data', id=id),
+            "ACTION": url_for('books.edit_book', id=id),
     }
     return render_template('data_form.html', **kwargs)
 
@@ -264,10 +267,12 @@ def list_books():
     books_list = []
 
     if g.user:
-        books = find('rr', 'books', {'owner_id': g.user['_id']})
+        pprint(g.user)
+        books = find('rr', 'books', {'owner': g.user['userinfo']['name']})
 
         # Prepare the data list to pass to the template
         for book in books:
+            print(books)
             books_list.append({
                 '_id': book['_id'],
                 'title': book['title']
@@ -281,6 +286,9 @@ def list_books():
 @login_required
 def delete_book(id):
     id = ObjectId(id)
+    book = findOne('rr', 'books', {'_id': id})
+    if book['owner'] != g.user['userinfo']['name']:
+        redirect(url_for('books.list_books'))
     deleteOne('rr', 'books', {"_id": id})
     return redirect('../list_books')
 

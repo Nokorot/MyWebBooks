@@ -18,7 +18,7 @@
         {% for data in data_list %}
         <div class="list-item">
             <form action="{{ url_for('books.delete_book', id = data['_id']) }}" method="post">
-              <a href="{{ url_for('books.edit_data', id=data['_id']) }}">{{ data['title'] }}</a>
+              <a href="{{ url_for('books.edit_book', id=data['_id']) }}">{{ data['title'] }}</a>
               <input type="text" name = "del" hidden = 'true' value="{{ data['_id'] }}">
               <a href="{{ url_for('books.delete_book', id = data['_id']) }}" class = 'delete-button fa-solid fa-trash-can'>Delete</a>
               <a href="{{ url_for('royalroad_dl.head') }}"> Send To Kindle </a>

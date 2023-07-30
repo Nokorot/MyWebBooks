@@ -1,10 +1,14 @@
 import functools
-import os, sys
+import os, sys, json
+
+from urllib.parse import quote_plus, urlencode
 from flask import Flask, jsonify, request, session, g, render_template, flash, redirect, url_for
 from flask_htmlmin import HTMLMIN
-from src.mongodb_api_1 import *
 from dotenv import load_dotenv
 from bson.objectid import ObjectId
+from authlib.integrations.flask_client import OAuth
+
+from src.mongodb_api_1 import *
 
 sys.path.append("./webbook_dl/")
 
@@ -22,6 +26,19 @@ app.config['MINIFY_HTML'] = not app.config['DEBUG']
 app.config['MINIFY_HTML_SKIP_COMMENTS'] = not app.config['DEBUG']  
 html_min = HTMLMIN(app)
 
+oauth = OAuth(app)
+
+load_dotenv()
+oauth.register(
+    "auth0",
+    client_id=os.environ.get("AUTH0_CLIENT_ID"),
+    client_secret=os.environ.get("AUTH0_CLIENT_SECRET"),
+    client_kwargs={
+        "scope": "openid profile email",
+    },
+    server_metadata_url=f'https://{os.environ.get("AUTH0_DOMAIN")}/.well-known/openid-configuration',
+)
+
 if not os.path.exists('./out'):
     os.makedirs("./out")
 
@@ -38,7 +55,11 @@ def generate_form_entry(data, key, name):
     return form_entry
 
 
+
+
 # login page
+"""
+DEPRECATED
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if(g.user):
@@ -86,17 +107,30 @@ def login():
     }
 
     return render_template('forms/login_form.html', **kwargs)
+"""
+
+@app.route('/login')
+def login():
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True)
+    )
+
+@app.route("/callback", methods=["GET", "POST"])
+def callback():
+    token = oauth.auth0.authorize_access_token()
+    session["user"] = token
+    return redirect(url_for('books.list_books'))
+
 
 @app.before_request
 def load_logged_in_user():
-    user_id = session.get('user_id')
+    g.user = session.get('user')
 
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = findOne('rr', 'users', {'_id': ObjectId(user_id)})
 
 #register page:
+
+"""
+Deprecated
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
     if(request.method == "POST"):
@@ -154,7 +188,7 @@ def register():
             "ACTION": "",
     }
     return render_template("forms/register_form.html", **kwargs)
-
+"""
 @app.route('/confirm_email', methods= ['GET', 'POST'])
 def confirm_email():
     return render_template("confirm_email.html")
@@ -182,7 +216,18 @@ def reset_password():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(
+        "https://"
+        + os.enveron.get("AUTH0_DOMAIN")
+        + "/v2/logout?"
+        + urlencode(
+            {
+                "returnTo": url_for("books.list_books", _external=True),
+                "client_id": os.environ.get("AUTH0_CLIENT_ID"),
+            },
+            quote_via=quote_plus,
+        )
+    )
 
 
 
@@ -196,6 +241,6 @@ from src.royalroad_rss import blueprint
 app.register_blueprint(blueprint, url_prefix='/rr-rss')
 
 if __name__ == '__main__':
-    load_dotenv()
+    
     app.secret_key = os.environ['APP_SECRET_KEY']
     app.run(debug=True, port=os.getenv("PORT", default=5000))
