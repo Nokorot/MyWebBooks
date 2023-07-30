@@ -11,8 +11,10 @@ from authlib.integrations.flask_client import OAuth
 from src.mongodb_api_1 import *
 
 sys.path.append("./webbook_dl/")
+load_dotenv(dotenv_path='../.env')
 
 app = Flask(__name__)
+app.secret_key = os.environ['APP_SECRET_KEY']
 
 if __name__ == "__main__":
     app.config['DEBUG'] = True 
@@ -28,7 +30,7 @@ html_min = HTMLMIN(app)
 
 oauth = OAuth(app)
 
-load_dotenv(dotenv_path='../.env')
+
 oauth.register(
     "auth0",
     client_id=os.environ.get("AUTH0_CLIENT_ID"),
@@ -246,5 +248,5 @@ app.register_blueprint(blueprint, url_prefix='/rr-rss')
 
 if __name__ == '__main__':
     
-    app.secret_key = os.environ['APP_SECRET_KEY']
+    
     app.run(debug=True, port=os.getenv("PORT", default=5000))
