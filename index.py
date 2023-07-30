@@ -218,7 +218,7 @@ def logout():
     session.clear()
     return redirect(
         "https://"
-        + os.enveron.get("AUTH0_DOMAIN")
+        + os.environ.get("AUTH0_DOMAIN")
         + "/v2/logout?"
         + urlencode(
             {
