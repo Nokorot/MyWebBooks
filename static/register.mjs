@@ -2,8 +2,7 @@
 //const Realm = require("realm-web");
 
 let app = new Realm.App({ id: "royalroad-kyumk"});
-//const submit_button = document.querySelector("button[type='submit']");
-//submit_button.addEventListener("click", register_user());
+
 const form = document.querySelector("form");
 form.addEventListener("submit", register_user());
 
