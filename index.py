@@ -28,7 +28,7 @@ html_min = HTMLMIN(app)
 
 oauth = OAuth(app)
 
-load_dotenv()
+load_dotenv(dotenv_path='../.env')
 oauth.register(
     "auth0",
     client_id=os.environ.get("AUTH0_CLIENT_ID"),
@@ -121,10 +121,14 @@ def callback():
     session["user"] = token
     return redirect(url_for('books.list_books'))
 
+@app.route("/")
+def home():
+    return render_template('home.html')
 
 @app.before_request
 def load_logged_in_user():
     g.user = session.get('user')
+
 
 
 #register page:

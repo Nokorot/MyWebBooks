@@ -53,3 +53,7 @@ body.dark-mode {
 .dark-mode input:focus + .slider {
   box-shadow: 0 0 1px #2126F3;
 }
+
+.dark-mode a {
+    color: #fff;
+}
