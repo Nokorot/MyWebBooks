@@ -64,7 +64,7 @@ def new_book():
             "ACTION": ""
     }
 
-    return render_template('data_form.html', **kwargs)
+    return render_template('forms/new_book.html', **kwargs)
 
 
 @blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
@@ -267,15 +267,15 @@ def list_books():
     books_list = []
 
     if g.user:
-        pprint(g.user)
         books = find('rr', 'books', {'owner': g.user['userinfo']['name']})
 
         # Prepare the data list to pass to the template
         for book in books:
-            print(books)
+            print(book.keys())
             books_list.append({
                 '_id': book['_id'],
-                'title': book['title']
+                'title': book['title'],
+                'img_url': book['cover_image']
             })
     else:
         flash('Not logged in!')

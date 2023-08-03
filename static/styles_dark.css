@@ -5,12 +5,12 @@ body.dark-mode {
 }
 
 .dark-mode .container {
-    background-color: #ed1111;
+    background-color: #6528F7;
     border: 1px solid #555;
 }
 
 .dark-mode .list-item {
-    background-color: #c0c0da;
+    background-color: #A076F9;
 }
 
 .dark-mode h1 {
@@ -34,10 +34,6 @@ body.dark-mode {
     background-color: #555;
     color: #fff;
     border: 1px solid #888;
-}
-
-.dark-mode .button {
-    background-color: #555;
 }
 
 .dark-mode .button:hover {

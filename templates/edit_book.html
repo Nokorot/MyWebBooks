@@ -7,7 +7,10 @@
 {% block body %}
 <h1>Edit Data</h1>
 
+
 <div class="container">
+  <a href="{{url_for('books.list_books')}}" class="button back-button fa fa-arrow-left"> BACK</a>
+
   {% import 'macros/render_fields.j2' as macros %}
   <form action="{{ url_for('books.edit_data', id=id) }}" method="POST" onsubmit="submitForm(event)">
     {{ macros.render_fields(data) }}

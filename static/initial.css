@@ -14,33 +14,58 @@
 .new-data-instance-button:hover {
     background-color: #223094;
 }
-.delete-button {
-    background-color: #bb3505;
-    color: white;
+.button{
     padding: 15px 25px;
     text-decoration: none;
     border-radius: 8px;
-    position: absolute;
-    right: 10px;
-    transform: translate(-50%, -50%);
+}
+.delete-button {
+    background-color: #D7BBF5;
+    color: white;
+    position: relative;
+    margin-right: 10px;
+
+    
     
 }
 .delete-button:hover {
-    background-color: #f8d228;
+    background-color: #D7BBF5;
 }
 .logout-button{
     background-color: #f35e28;
     color: white;
-    padding: 15px 25px;
-    text-decoration: none;
-    border-radius: 8px;
     position: absolute;
     left: 10px;
-    bottom: 10px;
+    top: 10px;
 }
 .logout-button:hover{
     background-color: rgb(4, 32, 50);
 }
+.login-button{
+    background-color: #17f783;
+    color: white;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+.login-button:hover{
+    background-color: rgb(239, 245, 249);
+}
+.back-button{
+    position:relative;
+    top:10px;
+    left:10px;
+    background-color:#17f783
+}
 h1 {
     text-align: center;
+}
+img.center {
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+}
+img.header-logo{
+    width:10%;
+    height:10%;
 }
