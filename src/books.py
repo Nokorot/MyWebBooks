@@ -1,8 +1,9 @@
-
+import requests
 from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
 from datetime import datetime
+from bs4 import BeautifulSoup 
 
 from flask import render_template, request, url_for, redirect, g, session, flash
 from bson.objectid import ObjectId
@@ -24,15 +25,22 @@ def new_book():
         paragraph_css_selector = request.form.get('paragraph_css_selector')
         next_chapter_css_selector = request.form.get('next_chapter_css_selector')
 
+        book_url = request.form['entry_point']
+        r = requests.request('GET', book_url)
+        if r.status_code != 200:
+            print("page does not exists!")
+        else:
+            book_html = BeautifulSoup(r.text)
+        
         insertOne('rr', 'books',
             {
                 #added by the system
                 'owner' : g.user['userinfo']['name'],
                 'last_update' : datetime.now(),
                 #collected from form
-                'title' : title,
-                'author' : author,
-                'cover_image' : cover_image,
+                'title' :  book_html.select_one('div.fic-title h1').text if title == '' else title,
+                'author' : book_html.select_one('div.fic-title a').text if author == '' else author,
+                'cover_image' : book_html.select_one('img.thumbnail').get('src') if cover_image == '' else cover_image,
                 'entry_point' : entry_point,
                 'rss' : rss,
                 'section_css_selector' : section_css_selector,
@@ -82,10 +90,29 @@ def edit_book(id):
         with open("data/empty_book_form.json", 'r') as f:
             book_form_template = json.load(f)
         form = request.form
+        book_url = form['entry_point']
+        r = requests.request('GET', book_url)
+        if r.status_code != 200:
+            print("page does not exists!")
+        else:
+            book_html = BeautifulSoup(r.text)
         
+
         for key in book_form_template.keys():
             book_form_template[key] = form.get(key)
+            if book_form_template[key] == '':
+                match key:
+                    case 'cover_image':
+                        book_form_template[key] = book_html.select_one('img.thumbnail').get('src')
+                    case 'title':
+                        book_form_template[key] = book_html.select_one('div.fic-title h1').text
+                    case 'author':
+                        book_form_template[key] = book_html.select_one('div.fic-title a').text 
+                
+                
         
+        
+
         updateOne('rr','books', {'_id': id}, book_form_template)
         flash("data updated!")
         return 'Data updated successfully.'
