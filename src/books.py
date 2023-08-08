@@ -102,12 +102,11 @@ def edit_book(id):
         for key in book_form_template.keys():
             book_form_template[key] = form.get(key)
             if book_form_template[key] == '':
-                match key:
-                    case 'cover_image':
+                if key == 'cover_image':
                         book_form_template[key] = book_html.select_one('img.thumbnail').get('src')
-                    case 'title':
+                elif key == 'title':
                         book_form_template[key] = book_html.select_one('div.fic-title h1').text
-                    case 'author':
+                elif key == 'author':
                         book_form_template[key] = book_html.select_one('div.fic-title a').text 
                 
                 
