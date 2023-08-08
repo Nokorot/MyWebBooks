@@ -309,7 +309,7 @@ def list_books():
 
     return render_template('books.html', data_list=books_list)
 
-@blueprint.route('/delete_book/<id>', methods = ['POST'])
+@blueprint.route('/delete_book/<id>')
 @login_required
 def delete_book(id):
     id = ObjectId(id)
@@ -361,4 +361,7 @@ def download_epub(id):
 
     return redirect(url_for('books.list_books'))
 
+@blueprint.route('send_to_kindle/<id>')
+def send_to_kindle(id):
 
+    return redirect(url_for('books.list_books')) 
