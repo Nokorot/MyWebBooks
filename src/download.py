@@ -1,12 +1,14 @@
 from ebooklib import epub
+from flask import redirect, url_for, request
 
-from ..index import app
+from .books import blueprint 
 
 class EBook():
     def __init__():
         title = title 
 
-@app.route('download_epub')
+@blueprint.route('download_epub')
 def download_epub():
-    epub.EpubBook()
-    pass 
+    ebook = epub.EpubBook()
+    print(request.form)
+    return redirect(url_for('books.list_books'))

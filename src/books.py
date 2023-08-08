@@ -1,12 +1,13 @@
+from datetime import datetime
 import requests
+
 from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
-from datetime import datetime
 from bs4 import BeautifulSoup 
-
-from flask import render_template, request, url_for, redirect, g, session, flash
+from flask import render_template, request, url_for, redirect, g, session, flash, send_from_directory, send_file
 from bson.objectid import ObjectId
+from ebooklib import epub
 
 from src.mongodb_api_1 import *
 from src.auth import login_required
@@ -298,7 +299,6 @@ def list_books():
 
         # Prepare the data list to pass to the template
         for book in books:
-            print(book.keys())
             books_list.append({
                 '_id': book['_id'],
                 'title': book['title'],
@@ -319,5 +319,46 @@ def delete_book(id):
     deleteOne('rr', 'books', {"_id": id})
     return redirect('../list_books')
 
+
+@blueprint.route('download_epub/<id>')
+def download_epub(id):
+    book = findOne('rr', 'books', {'_id': ObjectId(id)})
+    if(os.path.exists('out/{}.epub'.format(book.get('title')))):
+        return send_file('out/{}.epub'.format(book.get('title')), as_attachment=True)
+        #return redirect(url_for('books.list_books'))
+    print('book')
+    print(book.keys())
+    ebook = epub.EpubBook()
+    # mandatory metadata
+    ebook.set_identifier(id)
+    ebook.set_title(book.get('title'))
+    ebook.set_language('en')
+    ebook.add_author(book.get('author'))
+    #collect chapters
+    start = BeautifulSoup(requests.get(book.get('entry_point')).text)
+    chapters = start.select('table#chapters a')
+    for index, chapter in enumerate(chapters):
+        print(f'downloading chapter {index}')
+        chapter_page = BeautifulSoup(requests.get('https://www.royalroad.com' + chapter.get('href')).text)
+        temp_chapter = epub.EpubHtml(title = chapter.get('innerHTML'),
+                                     file_name = f'chapter_{index}.xhtml')
+        temp_chapter.set_content(
+            str(chapter_page.select_one('h1')) +
+            ''.join([str(x) for x in chapter_page.select('div.chapter-content p')])
+        )
+        ebook.add_item(temp_chapter)
+        ebook.toc.append(temp_chapter)
+        ebook.spine.append(temp_chapter)
+    
+    ebook.add_item(epub.EpubNcx())
+    ebook.add_item(epub.EpubNav())
+    epub.write_epub('out/{}.epub'.format(book.get('title')), ebook)
+    try:
+        print('SENDING!')
+        send_from_directory('out', '{}.epub'.format(book.get('title')))
+    except:
+        flash('file not found')
+
+    return redirect(url_for('books.list_books'))
 
 
