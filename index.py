@@ -1,6 +1,7 @@
 import functools
 import os, sys, json
 
+import jwt 
 from urllib.parse import quote_plus, urlencode
 from flask import Flask, jsonify, request, session, g, render_template, flash, redirect, url_for
 from flask_htmlmin import HTMLMIN
@@ -131,7 +132,34 @@ def home():
 def load_logged_in_user():
     g.user = session.get('user')
 
+@app.route('/set_kindle_address', methods = ['GET','POST'])
+def set_kindle_address():
 
+    if request.method == 'POST':
+        secret = os.environ.get('SET_KINDLE_KEY')
+        token = request.args.get('session_token')
+        print('token')
+        print(token)
+        payload = jwt.decode(token, key = secret, algorithm = ['HS256'])
+        print(payload)
+    
+    data = {
+        "kindle_address": {
+            'label': 'Kindle Email Address',
+            'name': 'kindle_address',
+            'text': ''
+        }
+    }
+    
+    kwargs = {
+        "TITLE": 'SETUP KINDLE ADDRESS',
+        "DESCRIPTION": 'Please input your kindle address:',
+        'DATA': data,
+        'ACTION': '',
+        'SUBMIT': 'Submit'
+    }
+
+    return render_template('data_form.html', **kwargs)
 
 #register page:
 
@@ -236,7 +264,6 @@ def logout():
     )
 
 
-
 from src.books import blueprint
 app.register_blueprint(blueprint, url_prefix='/books')
 
@@ -247,6 +274,4 @@ from src.royalroad_rss import blueprint
 app.register_blueprint(blueprint, url_prefix='/rr-rss')
 
 if __name__ == '__main__':
-    
-    
     app.run(debug=True, port=os.getenv("PORT", default=5000))

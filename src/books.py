@@ -318,15 +318,24 @@ def delete_book(id):
     deleteOne('rr', 'books', {"_id": id})
     return redirect('../list_books')
 
-
 @blueprint.route('download_epub/<id>')
 def download_epub(id):
+    download_to_server(id)
     book = findOne('rr', 'books', {'_id': ObjectId(id)})
+    
+    try:
+        print('SENDING!')
+        return send_from_directory('out', '{}.epub'.format(book.get('title')), as_attachment = True)
+    except:
+        flash('file not found')
+    #return redirect(url_for('books.list_books'))
+
+
+def download_to_server(id):
+    book = findOne('rr', 'books', {'_id': ObjectId(id)})
+    #if already in server
     if(os.path.exists('out/{}.epub'.format(book.get('title')))):
-        return send_file('out/{}.epub'.format(book.get('title')), as_attachment=True)
-        #return redirect(url_for('books.list_books'))
-    print('book')
-    print(book.keys())
+        return
     ebook = epub.EpubBook()
     # mandatory metadata
     ebook.set_identifier(id)
@@ -352,15 +361,22 @@ def download_epub(id):
     ebook.add_item(epub.EpubNcx())
     ebook.add_item(epub.EpubNav())
     epub.write_epub('out/{}.epub'.format(book.get('title')), ebook)
-    try:
-        print('SENDING!')
-        send_from_directory('out', '{}.epub'.format(book.get('title')))
-    except:
-        flash('file not found')
+    return
 
-    return redirect(url_for('books.list_books'))
-
+from .sendToKindle import sendToKindle
 @blueprint.route('send_to_kindle/<id>')
 def send_to_kindle(id):
-
+    download_to_server(id)
+    book = findOne('rr', 'books', {'_id': ObjectId(id)})
+    sendToKindle(file = 'out/{}.epub'.format(book['title']), 
+                 target_filename='{}.epub'.format(book['title']),
+                 receiver = 'tarikcavalcanti12@gmail.com')
     return redirect(url_for('books.list_books')) 
+
+
+
+@blueprint.route('test')
+def test():
+    g.user['userinfo']['kindle_email'] = 'a'
+    print(g.user['userinfo']['kindle_email'])
+    return 'hello', 200
