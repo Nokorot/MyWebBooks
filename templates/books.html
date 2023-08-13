@@ -15,7 +15,7 @@
 
     <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
     <div class="kindle-address">
-    <form action="{{url_for('books.set_kindle_address')}}">
+    <form action="{{url_for('set_kindle_address')}}" method="post  ">
       <label for="kindle_address">Enter your Kindle Email Address:</label>
       <input type="text" name="kindle_address" id="kindle_address">
       <button type="submit">submit</button>

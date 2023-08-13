@@ -140,7 +140,7 @@ def set_kindle_address():
         token = request.args.get('session_token')
         print('token')
         print(token)
-        payload = jwt.decode(token, key = secret, algorithm = ['HS256'])
+        payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
         print(payload)
     
     data = {
