@@ -138,9 +138,12 @@ def set_kindle_address():
     if request.method == 'POST':
         secret = os.environ.get('SET_KINDLE_KEY')
         token = request.args.get('session_token')
-        print('token')
-        print(token)
-        payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
+       
+        header = jwt.get_unverified_header(token)
+        state = header.get('state')
+        print(header)
+        payload = jwt.decode(token, key = secret, algorithmsg = ['HS256'])
+        payload['kindle_address'] = request.form.get('kindle_address')
         print(payload)
     
     data = {
