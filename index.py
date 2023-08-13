@@ -144,7 +144,7 @@ def set_kindle_address():
         payload['kindle_address'] = request.form.get('kindle_address')
 
         token = jwt.encode(payload = payload, key = secret)
-        redirect('{1}/continue?session_token={2}'.format(os.environ.get('AUTH0_DOMAIN'), token))
+        redirect(os.environ.get('AUTH0_DOMAIN') + '/continue?session_token=' + token)
     
     data = {
         "kindle_address": {
