@@ -340,6 +340,7 @@ def download_epub(id):
         return send_from_directory('out', '{}.epub'.format(book.get('title')), as_attachment = True)
     except:
         flash('file not found')
+        return url_for('books.list_books')
     #return redirect(url_for('books.list_books'))
 
 
@@ -369,10 +370,12 @@ def download_to_server(id):
         ebook.add_item(temp_chapter)
         ebook.toc.append(temp_chapter)
         ebook.spine.append(temp_chapter)
-    
+
+    print('chapters packed')
     ebook.add_item(epub.EpubNcx())
     ebook.add_item(epub.EpubNav())
     epub.write_epub('out/{}.epub'.format(book.get('title')), ebook)
+    print('book in the server')
     return
 
 from .sendToKindle import sendToKindle

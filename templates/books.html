@@ -23,7 +23,7 @@
     </div>
     <div class="container">
       
-        {% for data in data_list %}
+        {% for index, data in enumerate(data_list) %}
         <div class="list-item">
             
             <form action="{{ url_for('books.delete_book', id = data['_id']) }}" method="post">
@@ -37,6 +37,7 @@
               <a href="{{ url_for('books.delete_book', id = data['_id']) }}" class = 'button delete-button fa-solid fa-trash-can'></a>
               <a href="{{ url_for('books.send_to_kindle', id = data['_id']) }}" class="button delete-button fa-solid"> Send To Kindle </a>
               <a href="{{ url_for('books.download_epub', id = data['_id']) }}", id = "download-book" class="button delete-button fa-solid fa-download"></a>
+              <canvas id="loading-bar-{{index}}"></canvas>
               <!--button type="button" id="download-book" class="button delete-button fa-solid fa-download"></button-->
               </div>
             </form>
