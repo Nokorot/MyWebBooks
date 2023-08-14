@@ -1,7 +1,9 @@
 import functools
 import os, sys, json
 
+from email_validator import validate_email, EmailNotValidError
 import jwt 
+import requests
 from urllib.parse import quote_plus, urlencode
 from flask import Flask, jsonify, request, session, g, render_template, flash, redirect, url_for
 from flask_htmlmin import HTMLMIN
@@ -136,15 +138,27 @@ def load_logged_in_user():
 def set_kindle_address():
 
     if request.method == 'POST':
-        secret = os.environ.get('SET_KINDLE_KEY')
-        token = request.args.get('session_token')
-       
-        header = jwt.get_unverified_header(token)
-        payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
-        payload['kindle_address'] = request.form.get('kindle_address')
+        try:
+            validate_email(request.form.get('kindle_address'))
 
-        token = jwt.encode(payload = payload, key = secret)
-        redirect(os.environ.get('AUTH0_DOMAIN') + '/continue?session_token=' + token)
+            secret = os.environ.get('SET_KINDLE_KEY')
+            token = request.args.get('session_token')
+            state = request.args.get('state')
+
+            payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
+            payload['kindle_address'] = request.form.get('kindle_address')
+            payload['state'] = state 
+            token = jwt.encode(payload = payload, key = secret)
+            
+        
+            return redirect('https://' 
+                    + os.environ.get('AUTH0_DOMAIN') 
+                    + '/continue?' 
+                    + "state=" + state
+                    + '&session_token=' + token             
+        )
+        except EmailNotValidError as e:
+            flash(str(e))
     
     data = {
         "kindle_address": {

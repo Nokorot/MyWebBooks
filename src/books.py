@@ -12,6 +12,18 @@ from ebooklib import epub
 from src.mongodb_api_1 import *
 from src.auth import login_required
 
+from auth0.management import Auth0
+from auth0.authentication import GetToken
+
+
+def get_user_auth0_info():
+    get_token = GetToken(os.environ.get('AUTH0_DOMAIN'), os.environ.get('MGMT_API_CLIENT_ID'), client_secret = os.environ.get('MGMT_API_SECRET'))
+    token = get_token.client_credentials('https://{}/api/v2/'.format(os.environ.get('AUTH0_DOMAIN')))
+    mgmt_token = token['access_token']
+
+    auth0 = Auth0(os.environ.get('AUTH0_DOMAIN'), mgmt_token)
+    return auth0.users.get(g.user['userinfo']['sub'])
+
 @blueprint.route('/new_book', methods=['GET', 'POST'])
 @login_required
 def new_book():
@@ -368,15 +380,18 @@ from .sendToKindle import sendToKindle
 def send_to_kindle(id):
     download_to_server(id)
     book = findOne('rr', 'books', {'_id': ObjectId(id)})
+    user = get_user_auth0_info()
     sendToKindle(file = 'out/{}.epub'.format(book['title']), 
                  target_filename='{}.epub'.format(book['title']),
-                 receiver = 'tarikcavalcanti12@gmail.com')
+                 receiver = user['user_metadata']['kindle_address'])
+    flash('the email is sent successfully')
     return redirect(url_for('books.list_books')) 
 
 
 
 @blueprint.route('test')
 def test():
-    g.user['userinfo']['kindle_email'] = 'a'
-    print(g.user['userinfo']['kindle_email'])
+    user = get_user_auth0_info()
+    user['user_metadata']['kindle_address']
+    
     return 'hello', 200
