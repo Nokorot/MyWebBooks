@@ -11,7 +11,9 @@ from dotenv import load_dotenv
 from bson.objectid import ObjectId
 from authlib.integrations.flask_client import OAuth
 
-from src.mongodb_api_1 import *
+import src.mongodb_api_1 as mongodb_api
+
+from src.auth import login_required
 
 sys.path.append("./webbook_dl/")
 load_dotenv(dotenv_path='../.env')
@@ -58,8 +60,6 @@ def generate_form_entry(data, key, name):
     value = data.get(name, "")
     form_entry = f'<div class="form-row"><label class="label" for="{name}">{key.capitalize()}:</label><div class="input-field"><input type="text" id="{name}" name="{name}" value="{value}" required></div></div>'
     return form_entry
-
-
 
 
 # login page
@@ -135,15 +135,34 @@ def load_logged_in_user():
     g.user = session.get('user')
 
 @app.route('/set_kindle_address', methods = ['GET','POST'])
+@login_required
 def set_kindle_address():
-
     if request.method == 'POST':
+        print(request.form.get('kindle_address'))
+
         try:
+            # Not sure valuation is necessary
             validate_email(request.form.get('kindle_address'))
+        
+            mongodb_api.updateOne('rr', 'kindle_address', { 'owner' : g.user['userinfo']['name'] },
+                { 'owner' : g.user['userinfo']['name'],
+                  'kindle_address' : request.form.get('kindle_address')}, upsert=True)
+
+            print("Address set", request.form.get('kindle_address'))
+
+            return redirect(url_for('home'));
+
+            # Note from Tor:
+            # I am guessing you are doing the following in order to store the email_address 
+            # in an encrypted manner. But the email is already send to the server unencrypted, 
+            # so there is not really much point.
+            # P.S. I looked at this, because it wasn't working
 
             secret = os.environ.get('SET_KINDLE_KEY')
             token = request.args.get('session_token')
             state = request.args.get('state')
+
+            # Note:  print(token) -> None
 
             payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
             payload['kindle_address'] = request.form.get('kindle_address')

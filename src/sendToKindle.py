@@ -17,7 +17,6 @@ def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=No
     password = os.environ.get("GMAIL_PASSWORD")
     print(password)
 
-
     message = constructMessage(sender, receiver, file, target_filename)
     sendEmail(sender, password, receiver, message)
 
