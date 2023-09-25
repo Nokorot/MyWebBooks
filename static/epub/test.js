@@ -70,7 +70,7 @@ download_btn.addEventListener('click', async () => {
     zip.folder('content').file('content.opf', metadata);
 
    async function parse_website(){
-        console.log('hi');
+          console.log('hi');
           let response = await fetch('https://www.royalroad.com/fiction/36735/the-perfect-run');
           console.log("hey");
           if (response.ok) {
