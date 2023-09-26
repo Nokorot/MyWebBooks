@@ -38,14 +38,21 @@ def new_book():
         title_css_selector = request.form.get('title_css_selector')
         paragraph_css_selector = request.form.get('paragraph_css_selector')
         next_chapter_css_selector = request.form.get('next_chapter_css_selector')
+       
+        from urllib.parse import urlparse 
 
         book_url = request.form['entry_point']
         r = requests.request('GET', book_url)
         if r.status_code != 200:
             print("page does not exists!")
+            return 
         else:
             book_html = BeautifulSoup(r.text)
+            print(urlparse(entry_point).netloc)
+            is_royalroad = urlparse(entry_point).netloc.split('.')[1] == 'royalroad'
         
+
+
         mongodb_api.insertOne('rr', 'books',
             {
                 #added by the system
@@ -57,15 +64,14 @@ def new_book():
                 'cover_image' : book_html.select_one('img.thumbnail').get('src') if cover_image == '' else cover_image,
                 'entry_point' : entry_point,
                 'rss' : rss,
-                'section_css_selector' : section_css_selector,
-                'title_css_selector' : title_css_selector,
-                'paragraph_css_selector' : paragraph_css_selector,
-                'next_chapter_css_selector' : next_chapter_css_selector
+                'section_css_selector' : "div.fic-header h1.font-white" if is_royalroad else '',
+                'title_css_selector' : "div.fic-header h1.font-white" if is_royalroad else '',
+                'paragraph_css_selector' : 'div.chapter-inner' if is_royalroad else '',
+                'next_chapter_css_selector' : "div.col-md-offset-4 a.btn" if is_royalroad else ''
             }
         )
-        flash('New data instance created successfully!')
+        flash('New book created successfully!')
         
-        #return redirect(url_for('books.edit_book/%s' % id))
  
     data = {
         "title": {'label': "Title", "name": "title", 'text': "" },
@@ -350,16 +356,12 @@ def download_to_server(id):
 
     # if already in server 
     # TODO: Have to check for updates
-    import os
     if(os.path.exists(server_epub_file_path)):
         return
 
-    # data = db_api.findOne({'id': id})['document']
     config = {}
     config['cache'] = f'cache/{id}'
     config['ignore_cache'] = False # data.get('ignore_cache', True)
-
-    print(book)
 
     # config['callbacks'] = "books.RR_Template.cbs_base"
     config['book'] = { 
@@ -383,7 +385,6 @@ def download_to_server(id):
     config = Config(config)
     config.ignore_last_cache = True
 
-    import os
     os.makedirs(config.cache, exist_ok=True)
 
     # Still relative
@@ -453,7 +454,7 @@ def send_to_kindle(id):
         sendToKindle(file = 'out/{}.epub'.format(book['title']), 
                      target_filename='{}.epub'.format(book['title']),
                      receiver = kindle_address);
-        flash('the email is sent successfully')
+        flash('The email has been sent successfully')
     return redirect(url_for('books.list_books')) 
 
 
