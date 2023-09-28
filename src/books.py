@@ -348,8 +348,8 @@ def download_epub(id):
     #return redirect(url_for('books.list_books'))
 
 
-
-def download_to_server(id):
+# def download_to_server(id):
+def download_to_server_Tors_non_working_version(id):
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
 
     server_epub_file_path = 'out/{}.epub'.format(book.get('title'));
@@ -400,12 +400,12 @@ def download_to_server(id):
     
     return
 
-
-def download_to_server_tariks_non_working_version(id):
+def download_to_server(id):
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
     #if already in server
     if(os.path.exists('out/{}.epub'.format(book.get('title')))):
         return
+
     ebook = epub.EpubBook()
     # mandatory metadata
     ebook.set_identifier(id)
