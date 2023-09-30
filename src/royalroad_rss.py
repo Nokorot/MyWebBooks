@@ -4,7 +4,7 @@ blueprint = Blueprint('royalroad_rss', __name__)
 
 
 from html_to_epub.RR_rss import load_datafile, getOldestNew, getChapters
-from src.sendToKindle import main as sendToKindle
+from src.sendToKindle import sendToKindle
 
 from .mongodb import mongodb_api
 
@@ -53,7 +53,7 @@ def RR_rss(id):
     #     f.write(epub_file)
     rss_state_db_api.updateOne({'id': "latest"}, {'id': "latest", 'filepath': epub_file}, upsert=True);
 
-    sendToKindle(epub_file)
+    sendToKindle(file = epub_file)
 
     return f"""
     <html> <p>A new update was sent to the kindle <p>

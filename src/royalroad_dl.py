@@ -34,14 +34,14 @@ def download_book_submit(id):
     }
 
 
-    sentders_email="torhoaakon@gmail.com"
+    sender_email="torhoaakon@gmail.com"
 
     kwargs = {
             "TITLE": "Download Succeeded!",
             "BOOK_ID": id,
             "ACTION": url_for("royalroad_dl.download_book_submit", id=id),
             "DATA": data,
-            "SENDERS_EMAIL": sentders_email,
+            "SENDERS_EMAIL": sender_email,
     }
 
     return render_template("dowanload_success.html", **kwargs)

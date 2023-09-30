@@ -3,17 +3,19 @@
 import smtplib #importing the module
 import sys, os
 
+from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-def main(file, receiver=None, target_filename=None):
-    if not receiver:
+def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=None, target_filename=None):
+    load_dotenv()
+    if not receiver or not file:
         return
-    sender='torhoaakon@gmail.com'
+    
     password = os.environ.get("GMAIL_PASSWORD")
-
+    print(password)
 
     message = constructMessage(sender, receiver, file, target_filename)
     sendEmail(sender, password, receiver, message)
@@ -27,7 +29,7 @@ def constructMessage(sender_add, receiver_add, file, target_filename=None):
     
     message["From"] = sender_add
     message['To'] = receiver_add
-    message['Subject'] = "Email from python"
+    message['Subject'] = f"Your book {target_filename} has arrived!"
     
     attach = open(file, "rb")
     
@@ -42,11 +44,8 @@ def constructMessage(sender_add, receiver_add, file, target_filename=None):
     return message.as_string()
 
 def sendEmail(sender_add, password, receiver_add, message):
-    #creating the SMTP server object by giving SMPT server address and port number
-    smtp_server=smtplib.SMTP("smtp.gmail.com",587)
-    smtp_server.ehlo()
-    smtp_server.starttls() 
-    smtp_server.ehlo() 
+    #creating the SMTP server object by giving SMTP server address and port number
+    smtp_server=smtplib.SMTP_SSL("smtp.gmail.com",465)
     
     smtp_server.login(sender_add,password)
     
@@ -70,4 +69,4 @@ if __name__ == '__main__':
         usage()
         sys.exit(1)
     
-    main(sys.argv[1])
+    sendToKindle(sys.argv[1])

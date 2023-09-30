@@ -11,7 +11,6 @@ load_dotenv()
 MONGODB_URI = os.environ['MONGODB_URI']
 
 try:
-  print("connecnting to client")
   client = pymongo.MongoClient(MONGODB_URI)
   print("connected")
   
@@ -32,9 +31,9 @@ def find(database: str, collection:str, query: dict):
   coll = client[database][collection]
   return coll.find(query)
 
-def updateOne(database: str, collection: str, query: dict, update: dict):
+def updateOne(database: str, collection: str, query: dict, update: dict, **kwargs):
   coll = client[database][collection]
-  coll.update_one(query, {"$set" : update })
+  coll.update_one(query, {"$set" : update }, **kwargs)
 
 def deleteOne(database: str, collection: str, query: dict):
   coll = client[database][collection]

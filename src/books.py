@@ -1,14 +1,29 @@
+from datetime import datetime
+import requests
 
 from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
-from datetime import datetime
-
-from flask import render_template, request, url_for, redirect, g, session, flash
+from bs4 import BeautifulSoup 
+from flask import render_template, request, url_for, redirect, g, session, flash, send_from_directory, send_file
 from bson.objectid import ObjectId
+from ebooklib import epub
 
-from src.mongodb_api_1 import *
+import os
+import src.mongodb_api_1 as mongodb_api # import *
 from src.auth import login_required
+
+from auth0.management import Auth0
+from auth0.authentication import GetToken
+
+
+def get_user_auth0_info():
+    get_token = GetToken(os.environ.get('AUTH0_DOMAIN'), os.environ.get('MGMT_API_CLIENT_ID'), client_secret = os.environ.get('MGMT_API_SECRET'))
+    token = get_token.client_credentials('https://{}/api/v2/'.format(os.environ.get('AUTH0_DOMAIN')))
+    mgmt_token = token['access_token']
+
+    auth0 = Auth0(os.environ.get('AUTH0_DOMAIN'), mgmt_token)
+    return auth0.users.get(g.user['userinfo']['sub'])
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
 @login_required
@@ -23,27 +38,40 @@ def new_book():
         title_css_selector = request.form.get('title_css_selector')
         paragraph_css_selector = request.form.get('paragraph_css_selector')
         next_chapter_css_selector = request.form.get('next_chapter_css_selector')
+       
+        from urllib.parse import urlparse 
 
-        insertOne('rr', 'books',
+        book_url = request.form['entry_point']
+        r = requests.request('GET', book_url)
+        if r.status_code != 200:
+            print("page does not exists!")
+            return 
+        else:
+            book_html = BeautifulSoup(r.text)
+            print(urlparse(entry_point).netloc)
+            is_royalroad = urlparse(entry_point).netloc.split('.')[1] == 'royalroad'
+        
+
+
+        mongodb_api.insertOne('rr', 'books',
             {
                 #added by the system
-                'owner_id' : g.user['_id'],
+                'owner' : g.user['userinfo']['name'],
                 'last_update' : datetime.now(),
                 #collected from form
-                'title' : title,
-                'author' : author,
-                'cover_image' : cover_image,
+                'title' :  book_html.select_one('div.fic-title h1').text if title == '' else title,
+                'author' : book_html.select_one('div.fic-title a').text if author == '' else author,
+                'cover_image' : book_html.select_one('img.thumbnail').get('src') if cover_image == '' else cover_image,
                 'entry_point' : entry_point,
                 'rss' : rss,
-                'section_css_selector' : section_css_selector,
-                'title_css_selector' : title_css_selector,
-                'paragraph_css_selector' : paragraph_css_selector,
-                'next_chapter_css_selector' : next_chapter_css_selector
+                'section_css_selector' : "div.fic-header h1.font-white" if is_royalroad else '',
+                'title_css_selector' : "div.fic-header h1.font-white" if is_royalroad else '',
+                'paragraph_css_selector' : 'div.chapter-inner' if is_royalroad else '',
+                'next_chapter_css_selector' : "div.col-md-offset-4 a.btn" if is_royalroad else ''
             }
         )
-        flash('New data instance created successfully!')
+        flash('New book created successfully!')
         
-        #return redirect(url_for('books.edit_book/%s' % id))
  
     data = {
         "title": {'label': "Title", "name": "title", 'text': "" },
@@ -64,13 +92,16 @@ def new_book():
             "ACTION": ""
     }
 
-    return render_template('data_form.html', **kwargs)
+    return render_template('forms/new_book.html', **kwargs)
 
 
 @blueprint.route('/edit_book/<id>', methods=['GET', 'POST'])
 @login_required
-def edit_data(id):
+def edit_book(id):
     id = ObjectId(id)
+    book = mongodb_api.findOne('rr', 'books', {'_id': id})
+    if book['owner'] != g.user['userinfo']['name']:
+        redirect(url_for('books.list_books'))
 
     if request.method == 'POST':
         # Update the JSON data with the form values
@@ -79,17 +110,32 @@ def edit_data(id):
         with open("data/empty_book_form.json", 'r') as f:
             book_form_template = json.load(f)
         form = request.form
+        book_url = form['entry_point']
+        r = requests.request('GET', book_url)
+        if r.status_code != 200:
+            print("page does not exists!")
+        else:
+            book_html = BeautifulSoup(r.text)
         
+
         for key in book_form_template.keys():
             book_form_template[key] = form.get(key)
-        
-        updateOne('rr','books', {'_id': id}, book_form_template)
+            if book_form_template[key] == '':
+                if key == 'cover_image':
+                        book_form_template[key] = book_html.select_one('img.thumbnail').get('src')
+                elif key == 'title':
+                        book_form_template[key] = book_html.select_one('div.fic-title h1').text
+                elif key == 'author':
+                        book_form_template[key] = book_html.select_one('div.fic-title a').text 
+                
+                
+        mongodb_api.updateOne('rr','books', {'_id': id}, book_form_template)
         flash("data updated!")
         return 'Data updated successfully.'
 
 
     # Retrieve the data from MongoDB
-    book = findOne('rr', 'books', {'_id': id})
+    book = mongodb_api.findOne('rr', 'books', {'_id': id})
 
     data = {
         "title": {'label': "Title", "name": "title"},
@@ -113,10 +159,11 @@ def edit_data(id):
             "DATA": data,
             "NO_REDIRECT_ONSUBMIT": True,
             "INCLUDE_IMPORT_EXPORT": True,
-            "ACTION": url_for('books.edit_data', id=id),
+            "ACTION": url_for('books.edit_book', id=id),
     }
     return render_template('data_form.html', **kwargs)
 
+# This does not work I think
 @blueprint.route('/download_book/<id>')
 def download_book(id):  
     def gen_config(id, data):
@@ -148,7 +195,6 @@ def download_book(id):
     config = Config(gen_config(id, request.form))
     config.ignore_last_cache = True
 
-    import os
     os.makedirs(config.cache, exist_ok=True)
 
     # Still relative
@@ -189,7 +235,6 @@ def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
 
     base_url = "https://www.royalroad.com"
     cache_dir = "./cache/RR"
-    import os
     os.makedirs(cache_dir, exist_ok=True)
     
     cache_filename = Network.cache_filename(cache_dir, url)
@@ -264,25 +309,160 @@ def list_books():
     books_list = []
 
     if g.user:
-        books = find('rr', 'books', {'owner_id': g.user['_id']})
+        books = mongodb_api.find('rr', 'books', {'owner': g.user['userinfo']['name']})
 
         # Prepare the data list to pass to the template
         for book in books:
             books_list.append({
                 '_id': book['_id'],
-                'title': book['title']
+                'title': book['title'],
+                'img_url': book['cover_image']
             })
     else:
         flash('Not logged in!')
 
     return render_template('books.html', data_list=books_list)
 
-@blueprint.route('/delete_book/<id>', methods = ['POST'])
+@blueprint.route('/delete_book/<id>')
 @login_required
 def delete_book(id):
     id = ObjectId(id)
-    deleteOne('rr', 'books', {"_id": id})
+    book = mongodb_api.findOne('rr', 'books', {'_id': id})
+    if book['owner'] != g.user['userinfo']['name']:
+        redirect(url_for('books.list_books'))
+    mongodb_api.deleteOne('rr', 'books', {"_id": id})
     return redirect('../list_books')
 
+@blueprint.route('download_epub/<id>')
+@login_required
+def download_epub(id):
+    download_to_server(id)
+    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+    
+    try:
+        print('SENDING!')
+        return send_from_directory('out', '{}.epub'.format(book.get('title')), as_attachment = True)
+    except:
+        flash('file not found')
+        return url_for('books.list_books')
+    #return redirect(url_for('books.list_books'))
 
 
+# def download_to_server(id):
+def download_to_server_Tors_non_working_version(id):
+    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+
+    server_epub_file_path = 'out/{}.epub'.format(book.get('title'));
+
+    # if already in server 
+    # TODO: Have to check for updates
+    if(os.path.exists(server_epub_file_path)):
+        return
+
+    config = {}
+    config['cache'] = f'cache/{id}'
+    config['ignore_cache'] = False # data.get('ignore_cache', True)
+
+    # config['callbacks'] = "books.RR_Template.cbs_base"
+    config['book'] = { 
+        "title"           : book.get("title"),
+        "author"          : book.get("author"),
+        "epub_filename"   : server_epub_file_path,
+        "cover_image"     : book.get("cover_image"),
+        "css_filename"    : "webbook_dl/kindle.css", # This should not be necessary
+        "entry_point"     : book.get("entry_point"),
+        "chapter"         : {
+            'title_css_selector'       : book.get('title_css_selector'),
+            'text_css_selector'        : book.get('paragraph_css_selector'),
+            # 'text_css_selector'        : book.get('text_css_selector'),
+            'section_css_selector'     : book.get('section_css_selector'),
+            'next_chapter_css_selector': book.get('next_chapter_css_selector'),
+            },
+        "include_images"  : True, #book.get("include_images"),
+    }
+
+    from html_to_epub import Config, Book
+    config = Config(config)
+    config.ignore_last_cache = True
+
+    os.makedirs(config.cache, exist_ok=True)
+
+    # Still relative
+    from books.RR_Template.cbs_base import Callbacks
+    book = Book(config, Callbacks(config))
+
+    book.load_html()
+
+    print(config.book.epub_filename)
+
+    from ebooklib import epub
+    epub.write_epub(config.book.epub_filename, book.generate_epub(), {})
+    
+    return
+
+def download_to_server(id):
+    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+    #if already in server
+    if(os.path.exists('out/{}.epub'.format(book.get('title')))):
+        return
+
+    ebook = epub.EpubBook()
+    # mandatory metadata
+    ebook.set_identifier(id)
+    ebook.set_title(book.get('title'))
+    ebook.set_language('en')
+    ebook.add_author(book.get('author'))
+    #collect chapters
+    start = BeautifulSoup(requests.get(book.get('entry_point')).text)
+    chapters = start.select('table#chapters a')
+    for index, chapter in enumerate(chapters):
+        print(f'downloading chapter {index}')
+        chapter_page = BeautifulSoup(requests.get('https://www.royalroad.com' + chapter.get('href')).text)
+        temp_chapter = epub.EpubHtml(title = chapter.get('innerHTML'),
+                                     file_name = f'chapter_{index}.xhtml')
+        temp_chapter.set_content(
+            str(chapter_page.select_one('h1')) +
+            ''.join([str(x) for x in chapter_page.select('div.chapter-content p')])
+        )
+        ebook.add_item(temp_chapter)
+        ebook.toc.append(temp_chapter)
+        ebook.spine.append(temp_chapter)
+
+    print('chapters packed')
+    ebook.add_item(epub.EpubNcx())
+    ebook.add_item(epub.EpubNav())
+    epub.write_epub('out/{}.epub'.format(book.get('title')), ebook)
+    print('book in the server')
+    return
+
+from .sendToKindle import sendToKindle
+@blueprint.route('send_to_kindle/<id>')
+@login_required
+def send_to_kindle(id):
+    download_to_server(id)
+    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+
+    # user = get_user_auth0_info()
+    # kindle_address = user['user_metadata']['kindle_address'])
+
+    kindle_address = mongodb_api.findOne('rr', 'kindle_address', {}).get('kindle_address')
+
+    print(kindle_address, '####')
+    if not kindle_address:
+        flash('The kindle email address was not set. Please enter and submit your kindle email address');
+    else:
+        sendToKindle(file = 'out/{}.epub'.format(book['title']), 
+                     target_filename='{}.epub'.format(book['title']),
+                     receiver = kindle_address);
+        flash('The email has been sent successfully')
+    return redirect(url_for('books.list_books')) 
+
+
+
+
+@blueprint.route('test')
+def test():
+    user = get_user_auth0_info()
+    user['user_metadata']['kindle_address']
+    
+    return 'hello', 200

@@ -1,14 +1,25 @@
 import functools
-import os, sys
+import os, sys, json
+
+from email_validator import validate_email, EmailNotValidError
+import jwt 
+import requests
+from urllib.parse import quote_plus, urlencode
 from flask import Flask, jsonify, request, session, g, render_template, flash, redirect, url_for
 from flask_htmlmin import HTMLMIN
-from src.mongodb_api_1 import *
 from dotenv import load_dotenv
 from bson.objectid import ObjectId
+from authlib.integrations.flask_client import OAuth
+
+import src.mongodb_api_1 as mongodb_api
+
+from src.auth import login_required
 
 sys.path.append("./webbook_dl/")
+load_dotenv(dotenv_path='../.env')
 
 app = Flask(__name__)
+app.secret_key = os.environ['APP_SECRET_KEY']
 
 if __name__ == "__main__":
     app.config['DEBUG'] = True 
@@ -21,6 +32,19 @@ app.config['MINIFY_HTML'] = not app.config['DEBUG']
 # Skip removing comments
 app.config['MINIFY_HTML_SKIP_COMMENTS'] = not app.config['DEBUG']  
 html_min = HTMLMIN(app)
+
+oauth = OAuth(app)
+
+
+oauth.register(
+    "auth0",
+    client_id=os.environ.get("AUTH0_CLIENT_ID"),
+    client_secret=os.environ.get("AUTH0_CLIENT_SECRET"),
+    client_kwargs={
+        "scope": "openid profile email",
+    },
+    server_metadata_url=f'https://{os.environ.get("AUTH0_DOMAIN")}/.well-known/openid-configuration',
+)
 
 if not os.path.exists('./out'):
     os.makedirs("./out")
@@ -39,6 +63,8 @@ def generate_form_entry(data, key, name):
 
 
 # login page
+"""
+DEPRECATED
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if(g.user):
@@ -86,17 +112,95 @@ def login():
     }
 
     return render_template('forms/login_form.html', **kwargs)
+"""
+
+@app.route('/login')
+def login():
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True)
+    )
+
+@app.route("/callback", methods=["GET", "POST"])
+def callback():
+    token = oauth.auth0.authorize_access_token()
+    session["user"] = token
+    return redirect(url_for('books.list_books'))
+
+@app.route("/")
+def home():
+    return render_template('home.html')
 
 @app.before_request
 def load_logged_in_user():
-    user_id = session.get('user_id')
+    g.user = session.get('user')
 
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = findOne('rr', 'users', {'_id': ObjectId(user_id)})
+@app.route('/set_kindle_address', methods = ['GET','POST'])
+@login_required
+def set_kindle_address():
+    if request.method == 'POST':
+        print(request.form.get('kindle_address'))
+
+        try:
+            # Not sure valuation is necessary
+            validate_email(request.form.get('kindle_address'))
+        
+            mongodb_api.updateOne('rr', 'kindle_address', { 'owner' : g.user['userinfo']['name'] },
+                { 'owner' : g.user['userinfo']['name'],
+                  'kindle_address' : request.form.get('kindle_address')}, upsert=True)
+
+            print("Address set", request.form.get('kindle_address'))
+
+            return redirect(url_for('home'));
+
+            # Note from Tor:
+            # I am guessing you are doing the following in order to store the email_address 
+            # in an encrypted manner. But the email is already send to the server unencrypted, 
+            # so there is not really much point.
+            # P.S. I looked at this, because it wasn't working
+
+            secret = os.environ.get('SET_KINDLE_KEY')
+            token = request.args.get('session_token')
+            state = request.args.get('state')
+
+            # Note:  print(token) -> None
+
+            payload = jwt.decode(token, key = secret, algorithms = ['HS256'])
+            payload['kindle_address'] = request.form.get('kindle_address')
+            payload['state'] = state 
+            token = jwt.encode(payload = payload, key = secret)
+            
+        
+            return redirect('https://' 
+                    + os.environ.get('AUTH0_DOMAIN') 
+                    + '/continue?' 
+                    + "state=" + state
+                    + '&session_token=' + token             
+        )
+        except EmailNotValidError as e:
+            flash(str(e))
+    
+    data = {
+        "kindle_address": {
+            'label': 'Kindle Email Address',
+            'name': 'kindle_address',
+            'text': ''
+        }
+    }
+    
+    kwargs = {
+        "TITLE": 'SETUP KINDLE ADDRESS',
+        "DESCRIPTION": 'Please input your kindle address:',
+        'DATA': data,
+        'ACTION': '',
+        'SUBMIT': 'Submit'
+    }
+
+    return render_template('data_form.html', **kwargs)
 
 #register page:
+
+"""
+Deprecated
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
     if(request.method == "POST"):
@@ -154,7 +258,7 @@ def register():
             "ACTION": "",
     }
     return render_template("forms/register_form.html", **kwargs)
-
+"""
 @app.route('/confirm_email', methods= ['GET', 'POST'])
 def confirm_email():
     return render_template("confirm_email.html")
@@ -182,8 +286,18 @@ def reset_password():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
-
+    return redirect(
+        "https://"
+        + os.environ.get("AUTH0_DOMAIN")
+        + "/v2/logout?"
+        + urlencode(
+            {
+                "returnTo": url_for("books.list_books", _external=True),
+                "client_id": os.environ.get("AUTH0_CLIENT_ID"),
+            },
+            quote_via=quote_plus,
+        )
+    )
 
 
 from src.books import blueprint
@@ -192,10 +306,8 @@ app.register_blueprint(blueprint, url_prefix='/books')
 from src.royalroad_dl import blueprint 
 app.register_blueprint(blueprint, url_prefix='/rr-dl')
 
-from src.royalroad_rss import blueprint 
-app.register_blueprint(blueprint, url_prefix='/rr-rss')
+# from src.royalroad_rss import blueprint 
+# app.register_blueprint(blueprint, url_prefix='/rr-rss')
 
 if __name__ == '__main__':
-    load_dotenv()
-    app.secret_key = os.environ['APP_SECRET_KEY']
     app.run(debug=True, port=os.getenv("PORT", default=5000))
