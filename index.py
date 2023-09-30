@@ -306,8 +306,8 @@ app.register_blueprint(blueprint, url_prefix='/books')
 from src.royalroad_dl import blueprint 
 app.register_blueprint(blueprint, url_prefix='/rr-dl')
 
-from src.royalroad_rss import blueprint 
-app.register_blueprint(blueprint, url_prefix='/rr-rss')
+# from src.royalroad_rss import blueprint 
+# app.register_blueprint(blueprint, url_prefix='/rr-rss')
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))
