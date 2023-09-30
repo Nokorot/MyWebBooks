@@ -11,19 +11,9 @@ from ebooklib import epub
 
 import os
 import src.mongodb_api_1 as mongodb_api # import *
-from src.auth import login_required
+from src.login import login_required
 
-from auth0.management import Auth0
-from auth0.authentication import GetToken
-
-
-def get_user_auth0_info():
-    get_token = GetToken(os.environ.get('AUTH0_DOMAIN'), os.environ.get('MGMT_API_CLIENT_ID'), client_secret = os.environ.get('MGMT_API_SECRET'))
-    token = get_token.client_credentials('https://{}/api/v2/'.format(os.environ.get('AUTH0_DOMAIN')))
-    mgmt_token = token['access_token']
-
-    auth0 = Auth0(os.environ.get('AUTH0_DOMAIN'), mgmt_token)
-    return auth0.users.get(g.user['userinfo']['sub'])
+import src.user_data as user_data
 
 @blueprint.route('/new_book', methods=['GET', 'POST'])
 @login_required
@@ -163,58 +153,6 @@ def edit_book(id):
     }
     return render_template('data_form.html', **kwargs)
 
-# This does not work I think
-@blueprint.route('/download_book/<id>')
-def download_book(id):  
-    def gen_config(id, data):
-        db_api = mongodb_api.from_json("data/mongodb.json")
-        data = db_api.findOne({'id': id})['document']
-
-        # FOLDERNAME = hash_url
-        config = {}
-        config['cache'] = f'cache/{id}'
-        config['ignore_cache'] = False # data.get('ignore_cache', True)
-
-        # config['callbacks'] = "books.RR_Template.cbs_base"
-
-        book = { 
-            "title"           : data["title"],
-            "author"          : data["author"],
-            "epub_filename"   : f'out/{id}.epub',
-            "cover_image"     : data["cover_image"],
-            "css_filename"    : "webbook_dl/kindle.css",
-            "entry_point"     : data["entry_point"],
-            "chapter"         : data['chapter'],
-            "include_images"  : data["include_images"],
-        }
-
-        config['book'] = book 
-        return config
-
-    from html_to_epub import Config, Book
-    config = Config(gen_config(id, request.form))
-    config.ignore_last_cache = True
-
-    os.makedirs(config.cache, exist_ok=True)
-
-    # Still relative
-    from books.RR_Template.cbs_base import Callbacks
-    book = Book(config, Callbacks(config))
-
-    book.load_html()
-
-    print(config.book.epub_filename)
-
-    from ebooklib import epub
-    epub.write_epub(config.book.epub_filename, book.generate_epub(), {})
- 
-
-    from RR_cnf_gen import foldername_from_title
-    epub_filename = "%s.epub" % foldername_from_title(book.title)
-
-    return redirect(url_for("royalroad_dl.download_book_submit", id=id, epub_filename=epub_filename))
-
-
 @blueprint.route("/", methods=['GET', 'POST'])
 def head():
     kwargs = {
@@ -225,7 +163,6 @@ def head():
             "ACTION": url_for("royalroad_dl.book_config"),
     }
     return render_template('data_form.html', **kwargs)
-
 
 def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
     from html_to_epub.util import Network
@@ -333,10 +270,14 @@ def delete_book(id):
     mongodb_api.deleteOne('rr', 'books', {"_id": id})
     return redirect('../list_books')
 
+
+
+
+
 @blueprint.route('download_epub/<id>')
 @login_required
 def download_epub(id):
-    download_to_server(id)
+    download_book_to_server(id)
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
     
     try:
@@ -348,63 +289,49 @@ def download_epub(id):
     #return redirect(url_for('books.list_books'))
 
 
-# def download_to_server(id):
-def download_to_server_Tors_non_working_version(id):
+
+from .sendToKindle import sendToKindle
+@blueprint.route('send_to_kindle/<id>')
+@login_required
+def send_to_kindle(id):
+    ebook_file = download_book_to_server(id)
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
 
-    server_epub_file_path = 'out/{}.epub'.format(book.get('title'));
+    # user = get_user_auth0_info()
+    # kindle_address = user['user_metadata']['kindle_address'])
 
-    # if already in server 
-    # TODO: Have to check for updates
-    if(os.path.exists(server_epub_file_path)):
-        return
+    kindle_address = user_data.get_kindle_address()
 
-    config = {}
-    config['cache'] = f'cache/{id}'
-    config['ignore_cache'] = False # data.get('ignore_cache', True)
+    print(kindle_address, '####')
+    if not kindle_address:
+        flash('The kindle email address was not set. Please enter and submit your kindle email address');
+    else:
+        sendToKindle(file = ebook_file,
+                     target_filename='{}.epub'.format(book['title']),
+                     receiver = kindle_address);
+        flash('The email has been sent successfully')
+    return redirect(url_for('books.list_books')) 
 
-    # config['callbacks'] = "books.RR_Template.cbs_base"
-    config['book'] = { 
-        "title"           : book.get("title"),
-        "author"          : book.get("author"),
-        "epub_filename"   : server_epub_file_path,
-        "cover_image"     : book.get("cover_image"),
-        "css_filename"    : "webbook_dl/kindle.css", # This should not be necessary
-        "entry_point"     : book.get("entry_point"),
-        "chapter"         : {
-            'title_css_selector'       : book.get('title_css_selector'),
-            'text_css_selector'        : book.get('paragraph_css_selector'),
-            # 'text_css_selector'        : book.get('text_css_selector'),
-            'section_css_selector'     : book.get('section_css_selector'),
-            'next_chapter_css_selector': book.get('next_chapter_css_selector'),
-            },
-        "include_images"  : True, #book.get("include_images"),
-    }
 
-    from html_to_epub import Config, Book
-    config = Config(config)
-    config.ignore_last_cache = True
 
-    os.makedirs(config.cache, exist_ok=True)
 
-    # Still relative
-    from books.RR_Template.cbs_base import Callbacks
-    book = Book(config, Callbacks(config))
-
-    book.load_html()
-
-    print(config.book.epub_filename)
-
-    from ebooklib import epub
-    epub.write_epub(config.book.epub_filename, book.generate_epub(), {})
+@blueprint.route('test')
+def test():
+    user = user_data.get_auth0_info()
+    user['user_metadata']['kindle_address']
     
-    return
+    return 'hello', 200
 
-def download_to_server(id):
+
+# TODO: This function should take the book data as an augment no the book id
+def download_book_to_server(id):
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+
+    local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
+
     #if already in server
-    if(os.path.exists('out/{}.epub'.format(book.get('title')))):
-        return
+    if(os.path.exists(local_ebook_filepath)):
+        return local_ebook_filepath
 
     ebook = epub.EpubBook()
     # mandatory metadata
@@ -435,34 +362,5 @@ def download_to_server(id):
     print('book in the server')
     return
 
-from .sendToKindle import sendToKindle
-@blueprint.route('send_to_kindle/<id>')
-@login_required
-def send_to_kindle(id):
-    download_to_server(id)
-    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
-
-    # user = get_user_auth0_info()
-    # kindle_address = user['user_metadata']['kindle_address'])
-
-    kindle_address = mongodb_api.findOne('rr', 'kindle_address', {}).get('kindle_address')
-
-    print(kindle_address, '####')
-    if not kindle_address:
-        flash('The kindle email address was not set. Please enter and submit your kindle email address');
-    else:
-        sendToKindle(file = 'out/{}.epub'.format(book['title']), 
-                     target_filename='{}.epub'.format(book['title']),
-                     receiver = kindle_address);
-        flash('The email has been sent successfully')
-    return redirect(url_for('books.list_books')) 
 
 
-
-
-@blueprint.route('test')
-def test():
-    user = get_user_auth0_info()
-    user['user_metadata']['kindle_address']
-    
-    return 'hello', 200
