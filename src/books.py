@@ -79,7 +79,8 @@ def new_book():
             "DERCRIPTION": "",
             "SUBMIT": "Submit",
             "DATA": data,
-            "ACTION": ""
+            "ACTION": "",
+            "USER_PIC": g.user['userinfo']['picture']
     }
 
     return render_template('forms/new_book.html', **kwargs)

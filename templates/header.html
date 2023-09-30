@@ -35,7 +35,7 @@
     {% if g.user %}
         <div class="dropdown dropdown-user">
             <div class="dropbtn">
-                <img class="user-icon" src="{{url_for('static', filename='imgs/logo.png')}}">
+                <img class="user-icon" src="{{ g.user['userinfo']['picture'] }}">
             </div>
 
           <div id="myDropdown" class="dropdown-content">

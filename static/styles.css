@@ -269,6 +269,7 @@ input:checked + .slider:before {
 
 img.user-icon {
     height: 100%;
+    border-radius: 50%;
 }
 
 /* Dropdown Button */
