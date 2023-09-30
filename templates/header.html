@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
- {% block head %}    
- {% endblock %}    
     <meta charset = "UTF-8">
+
+    <link rel="icon" href="{{url_for('static', filename='imgs/logo.png')}}">
+
     <!--icon code-->
     <script src="https://kit.fontawesome.com/70a51386c2.js" crossorigin="anonymous"></script>
     
@@ -12,22 +13,46 @@
     <!-- icon library -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='initial.css')}}">
+
+{% block head %}    
+{% endblock %}    
 </head>
 <body>
     <!-- Rounded switch -->
-    <div class="'header">
+    <div class="header">
+
+    <a href="{{ url_for('home') }}">
+    <img class="header-logo" src="{{url_for('static', filename='imgs/logo.png')}}" alt="LOGO">
+    </a>
+
+    <!-- logout button -->
+    <div class="header-menu">
     <label class="toggle-dark-mode switch">
       <input type="checkbox" id="dark-mode-switch">
       <span class="slider round"></span>
     </label>
 
-    <img class="center header-logo" src="{{url_for('static', filename='imgs/logo.png')}}" alt="LOGO">
-    <!-- logout button -->
     {% if g.user %}
-    <a href=" {{url_for('logout')}} " class = 'button logout-button fa'>LOGOUT</a>
+        <div class="dropdown dropdown-user">
+            <div class="dropbtn">
+                <img class="user-icon" src="{{url_for('static', filename='imgs/logo.png')}}">
+            </div>
+
+          <div id="myDropdown" class="dropdown-content">
+
+
+            <a href="{{url_for('user_data.set_kindle_address')}}" class = 'button logout-button fa'>Set Kindle Email</a>
+
+            <a href=" {{url_for('logout')}} " class = 'button logout-button fa'>LOGOUT</a>
+          </div>
+        </div>
+
     {% else %}
     <a href=" {{url_for('login')}}" class = 'button login-button fa fa-person-through-window'> LOGIN </a>
     {% endif %}
+    </div>
+    </div>
+
     {% with messages = get_flashed_messages() %}
         {% if messages %} 
             <ul class = 'flashes'>
@@ -37,11 +62,62 @@
             </ul>
         {% endif %}
     {% endwith %} 
-    </div>
 
-    {% block body %}
-    {% endblock %}
+    <div class="center" style="margin: 20px">
+{% block body %}
+{% endblock %}
+    </div>
     
 </body>
 <script src="{{url_for('static', filename='dark_mode.js')}}"></script>
 </html>
+
+
+<script>
+
+
+// script.js
+document.addEventListener("DOMContentLoaded", function () {
+    // const userIcon = document.getElementById("user-icon");
+    // const dropdownMenu = document.getElementById("dropdown-menu");
+
+    const elementsWithCertainClass = document.querySelectorAll(".dropbtn");
+
+    elementsWithCertainClass.forEach(function (element) {
+        element.addEventListener("click", function () {
+            element.parentElement.classList.toggle("open");
+        });
+    });
+
+
+    // userIcon.addEventListener("click", function (event) {
+    //     event.stopPropagation(); // Prevent the click event from propagating to the document
+
+
+    // });
+
+});
+
+
+
+
+
+   /* When the user clicks on the button,
+toggle between hiding and showing the dropdown content */
+function myFunction() {
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+} 
+</script>

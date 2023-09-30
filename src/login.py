@@ -35,12 +35,11 @@ def __init(app):
     
     @app.route("/callback", methods=["GET", "POST"])
     def authentication_callback():
-        print("Callback")
+        token = oauth.auth0.authorize_access_token()
+        g.user = session["user"] = token
+
         if user_data.get_kindle_address() is None:
             return redirect(url_for('user_data.set_kindle_address'))
-    
-        token = oauth.auth0.authorize_access_token()
-        session["user"] = token
         return redirect(url_for('home'))
     
     @app.route('/logout')

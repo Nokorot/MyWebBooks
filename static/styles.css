@@ -1,7 +1,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0px;
     background-color: #f1f1f1;
 }
 
@@ -16,6 +16,7 @@ div.center {
 .container a {
   display:table-cell;
 }
+
 h1 {
     color: #333;
 }
@@ -26,7 +27,6 @@ h1 {
     margin-bottom: 20px;
     vertical-align: middle;
     display:table;
-
 }
 
 .label {
@@ -66,8 +66,10 @@ h1 {
   /* Add additional styles as needed */
 }
 
-
-
+.header {
+  height: 90px;
+  background: #002b36;  
+}
 
 /* Added CSS styles for input field alignment */
 .form-row {
@@ -239,4 +241,69 @@ input:checked + .slider:before {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.header-menu {
+    float: right;
+    
+    height:100%;
+}
+
+.header-title {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+.header .dropdown-user {
+    margin: 5px;
+    padding: 5px;
+    float: right;
+    display: inline-block;
+    height: 70px;
+}
+
+.dropdown-user .dropdown-content {
+  right: 10px;
+}
+
+img.user-icon {
+    height: 100%;
+}
+
+/* Dropdown Button */
+.dropbtn {
+  padding: 3px;
+  height: 100%;
+}
+
+
+
+.open .dropdown-content {
+  display: block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd;}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
 
