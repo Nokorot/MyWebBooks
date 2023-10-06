@@ -21,7 +21,8 @@ h1 {
     color: #333;
 }
 
-.container {
+.container { 
+    width: 70%;
     border: 1px solid #ccc;
     padding: 20px;
     margin-bottom: 20px;
@@ -35,10 +36,9 @@ h1 {
 
 .container input {
     border: 1px solid;
-    margin-bottom: 5px;
-    margin-top: 5px;
+    margin-bottom: 2px;
+    margin-top: 2px;
 }
-
 
 .button {
     background-color: #4CAF50;
@@ -71,24 +71,28 @@ h1 {
   background: #002b36;  
 }
 
+.form-table {
+    width: 100%;
+}
+
 /* Added CSS styles for input field alignment */
 .form-row {
-    display: flex;
+    width: 100%;
     flex-direction: row;
     align-items: center;
-    margin-bottom: 10px;
+    /* margin-bottom: 10px; */
     vertical-align: middle;
 
 }
 
 .form-row .label {
-    width: 150px;
     margin-right: 10px;
 }
 
 .form-row input {
     font-size: 18px;
     flex-grow: 1;
+    width: 100%;
 }
 
 .form-fields-group {
@@ -243,7 +247,6 @@ input:checked + .slider:before {
 
 .header-menu {
     float: right;
-    
     height:100%;
 }
 
@@ -268,25 +271,19 @@ input:checked + .slider:before {
 }
 
 img.user-icon {
-    height: 100%;
-    border-radius: 50%;
-}
-
-/* Dropdown Button */
-.dropbtn {
-  padding: 3px;
   height: 100%;
+  border-radius: 50%;
 }
 
-
-
-.open .dropdown-content {
-  display: block;
-}
-
-/* Dropdown Content (Hidden by Default) */
-.dropdown-content {
+.hidden .dropdown-content {
   display: none;
+}
+
+.hidden .collapsible-content {
+  display: none;
+}
+
+.dropdown-content {
   position: absolute;
   background-color: #f1f1f1;
   min-width: 160px;
@@ -294,7 +291,6 @@ img.user-icon {
   z-index: 1;
 }
 
-/* Links inside the dropdown */
 .dropdown-content a {
   color: black;
   padding: 12px 16px;
@@ -302,9 +298,5 @@ img.user-icon {
   display: block;
 }
 
-/* Change color of dropdown links on hover */
 .dropdown-content a:hover {background-color: #ddd;}
-
-/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
-.show {display:block;}
 

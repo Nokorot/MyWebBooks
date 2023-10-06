@@ -5,7 +5,7 @@ from flask import Blueprint
 blueprint = Blueprint("books", __name__)
 
 from bs4 import BeautifulSoup 
-from flask import render_template, request, url_for, redirect, g, session, flash, send_from_directory, send_file
+from flask import render_template, request, url_for, redirect, g, session, flash, send_file, send_file
 from bson.objectid import ObjectId
 from ebooklib import epub
 
@@ -64,15 +64,15 @@ def new_book():
         
  
     data = {
-        "title": {'label': "Title", "name": "title", 'text': "" },
-        "author": {'label': "author", "name": "author", 'text': "" },
-        "cover_image": {'label': "Cover Image URL", "name": "cover_image", 'text': "" },
-        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'text': "royalroad.com" },
-        "rss": {'label': "RSS URL", 'name': "rss", 'text': "" },
-        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'text': "" },
-        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'text': "" },
-        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'text': "" },
-        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'text': "" }
+        "title": {'label': "Title", "name": "title", 'value': "" },
+        "author": {'label': "author", "name": "author", 'value': "" },
+        "cover_image": {'label': "Cover Image URL", "name": "cover_image", 'value': "" },
+        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'value': "royalroad.com" },
+        "rss": {'label': "RSS URL", 'name': "rss", 'value': "" },
+        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'value': "" },
+        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'value': "" },
+        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'value': "" },
+        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'value': "" }
     }
     kwargs = {
             "TITLE": "New Book",
@@ -132,15 +132,15 @@ def edit_book(id):
         "title": {'label': "Title", "name": "title"},
         "author": {'label': "author", "name": "author"},
         "cover_image": {'label': "Cover Image URL", "name": "cover_image"},
-        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'text': "royalroad.com" },
-        "rss": {'label': "RSS URL", 'name': "rss", 'text': "" },
-        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'text': "" },
-        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'text': "" },
-        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'text': "" },
-        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'text': "" }
+        "entry_point": {'label': "Starting URL", "name" : "entry_point", 'value': "royalroad.com" },
+        "rss": {'label': "RSS URL", 'name': "rss", 'value': "" },
+        "section_css_selector": {'label': "Section CSS selector","name": "section_css_selector", 'value': "" },
+        "title_css_selector": {'label': "Title CSS selector", 'name': "title_css_selector", 'value': "" },
+        "paragraph_css_selector": {'label': "Paragraph CSS selector", "name":"paragraph_css_selector",'value': "" },
+        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'name': "next_chapter_css_selector", 'value': "" }
     }
     for key, value in data.items():
-        data[key]["text"] = book[key]
+        data[key]["value"] = book[key]
 
 
     kwargs = {
@@ -160,7 +160,7 @@ def head():
             "TITLE": "RoyalRoad Book Download",
             "DERCRIPTION": "Enter the url to the fiction page of a royalroad book",
             "SUBMIT": "Submit",
-            "DATA": {'fiction_page_url': {'label': 'Url', 'type': 'str', 'text': ''}},
+            "DATA": {'fiction_page_url': {'label': 'Url', 'type': 'str', 'value': ''}},
             "ACTION": url_for("royalroad_dl.book_config"),
     }
     return render_template('data_form.html', **kwargs)
@@ -227,7 +227,7 @@ def book_config():
         for key in data.keys():
             value = request_data.get(key)
             if value: 
-                data[key]['text'] = value
+                data[key]['value'] = value
 
     kwargs = {
             "TITLE": "RoyalRoad Book Configuration",
@@ -272,24 +272,83 @@ def delete_book(id):
     return redirect('../list_books')
 
 
-
-
-
-@blueprint.route('download_epub/<id>')
+@blueprint.route('download_epub/<id>', methods=['GET', 'POST'])
 @login_required
 def download_epub(id):
-    download_book_to_server(id)
     book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+
+    # Here the plan is to include the webpage_manager specified for this particular book on mongodb,
+    # but it is hard-coded to royalroad for now.
+    from src.webpages.royalroad import RoyalRoad
+    webpage_manager = RoyalRoad(id, book)
+
+    # For example, we can have a book_crawler webpage_manager, 
+    # with custom css selectors for the chapter content, title ... and the next chapter button
     
-    try:
-        print('SENDING!')
-        return send_from_directory('out', '{}.epub'.format(book.get('title')), as_attachment = True)
-    except:
-        flash('file not found')
-        return url_for('books.list_books')
-    #return redirect(url_for('books.list_books'))
+    print("METHOD", request.method)
+    if request.method == 'POST':
+        # local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
+
+        config_data = webpage_manager.parse_download_config_data_form(request.form)
+        datahash = webpage_manager.genereate_download_config_hash(config_data)
+        # TODO: Store the config_data along with the epub.
+
+        # print("Download Config (%s):" % datahash)
+        # print(config_data)
+
+        local_epub_filepath = 'out/{}.epub'.format(datahash)
+
+        # if now already in server download it
+        if(not os.path.exists(local_epub_filepath)):
+            webpage_manager.download_book(config_data, local_epub_filepath)
 
 
+        if request.form.get('sendToKindle'):
+            from .sendToKindle import sendToKindle
+
+            kindle_address = user_data.get_kindle_address()
+
+            print(kindle_address, '####')
+            if not kindle_address:
+                flash('The kindle email address was not set. Please enter and submit your kindle email address');
+            else:
+                sendToKindle(file = local_epub_filepath,
+                             target_filename='{}.epub'.format(book['title']),
+                             receiver = kindle_address);
+                flash('The email has been sent successfully')
+            return redirect(url_for('books.list_books')) 
+        
+        print('SENDING! "%s"' % local_epub_filepath)
+        return send_file(local_epub_filepath, as_attachment = True)
+        # try:
+        # except:
+        #     print('SENDING FAILED!')
+        #     flash('file not found')
+        #     return url_for('books.list_books')
+
+
+    # Some webpages, may have some special cases
+    # if webpage_manager.additional_entries:
+    #     data |= webpage_manager.additional_entries;
+
+    data = webpage_manager.get_default_download_config_data()
+    chapters = webpage_manager.get_book_chapters_list()
+
+    # for key, value in data.items():
+    #     data[key]["name"] = key
+    #     data[key]["value"] = book_data.get(key)
+
+    kwargs = {
+            "TITLE": "Download Config",
+            "DESCRIPTION": "",
+            "SUBMIT": "Download",
+            "DATA": data,
+            "CHAPTERS": list(enumerate(chapters)),
+            "NO_REDIRECT_ONSUBMIT": False,
+            "INCLUDE_IMPORT_EXPORT": False,
+            "ACTION": url_for('books.download_epub', id=id),
+    }
+    return render_template('download_config.html', **kwargs)
 
 from .sendToKindle import sendToKindle
 @blueprint.route('send_to_kindle/<id>')
@@ -314,15 +373,7 @@ def send_to_kindle(id):
     return redirect(url_for('books.list_books')) 
 
 
-
-
-@blueprint.route('test')
-def test():
-    user = user_data.get_auth0_info()
-    user['user_metadata']['kindle_address']
     
-    return 'hello', 200
-
 
 # TODO: This function should take the book data as an augment no the book id
 def download_book_to_server(id):
@@ -341,7 +392,8 @@ def download_book_to_server(id):
     ebook.set_language('en')
     ebook.add_author(book.get('author'))
     #collect chapters
-    start = BeautifulSoup(requests.get(book.get('entry_point')).text)
+    entry_point_text = requests.get(book.get('entry_point')).text
+    start = BeautifulSoup(entry_point_texttext, features="lxml")
     chapters = start.select('table#chapters a')
     for index, chapter in enumerate(chapters):
         print(f'downloading chapter {index}')

@@ -7,6 +7,7 @@
 
     <!--icon code-->
     <script src="https://kit.fontawesome.com/70a51386c2.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
     
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_dark.css') }}">
@@ -33,20 +34,13 @@
     </label>
 
     {% if g.user %}
-        <div class="dropdown dropdown-user">
-            <div class="dropbtn">
-                <img class="user-icon" src="{{ g.user['userinfo']['picture'] }}">
-            </div>
-
+        <div class="hidden dropdown dropdown-user">
+          <img class="dropbtn user-icon" src="{{ g.user['userinfo']['picture'] }}">
           <div id="myDropdown" class="dropdown-content">
-
-
             <a href="{{url_for('user_data.set_kindle_address')}}" class = 'button logout-button fa'>Set Kindle Email</a>
-
             <a href=" {{url_for('logout')}} " class = 'button logout-button fa'>LOGOUT</a>
           </div>
         </div>
-
     {% else %}
     <a href=" {{url_for('login')}}" class = 'button login-button fa fa-person-through-window'> LOGIN </a>
     {% endif %}
@@ -71,53 +65,3 @@
 </body>
 <script src="{{url_for('static', filename='dark_mode.js')}}"></script>
 </html>
-
-
-<script>
-
-
-// script.js
-document.addEventListener("DOMContentLoaded", function () {
-    // const userIcon = document.getElementById("user-icon");
-    // const dropdownMenu = document.getElementById("dropdown-menu");
-
-    const elementsWithCertainClass = document.querySelectorAll(".dropbtn");
-
-    elementsWithCertainClass.forEach(function (element) {
-        element.addEventListener("click", function () {
-            element.parentElement.classList.toggle("open");
-        });
-    });
-
-
-    // userIcon.addEventListener("click", function (event) {
-    //     event.stopPropagation(); // Prevent the click event from propagating to the document
-
-
-    // });
-
-});
-
-
-
-
-
-   /* When the user clicks on the button,
-toggle between hiding and showing the dropdown content */
-function myFunction() {
-}
-
-// Close the dropdown menu if the user clicks outside of it
-window.onclick = function(event) {
-  if (!event.target.matches('.dropbtn')) {
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
-      }
-    }
-  }
-} 
-</script>

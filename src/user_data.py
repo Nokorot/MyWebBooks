@@ -55,7 +55,7 @@ def set_kindle_address():
         "kindle_address": {
             'label': 'Kindle Email Address',
             'name': 'kindle_address',
-            'text': kindle_address or ''
+            'value': kindle_address or ''
         }
     }
     

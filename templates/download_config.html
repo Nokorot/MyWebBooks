@@ -1,0 +1,142 @@
+{% extends 'data_form.html' %}
+
+{% import 'macros/render_fields.j2' as macros %}
+
+
+
+{% block form_body %}
+
+<table class="form-table">
+  <colgroup>
+   <col span="1" style="width: 20%;">
+   <col span="1" style="width: 80%;">
+  </colgroup>
+
+  <tbody>
+ {{ macros.render_fields(DATA) }}
+  </tbody>
+
+</table>
+
+<table class="center">
+<tbody>
+    <td> <button class="button delete-button fa-solid fa-download" type="submit">Download</button> </td>
+    <td> <a id="sendToKindleButton" class="button delete-button fa-solid" href="#">SendToKindle</a> </td>
+</tbody>
+{#
+<button class="button delete-button fa-solid fa-download" name="download" value="Download" type="submit">Download</button>
+<button class="button delete-button fa-solid" name="sendToKindle" value="SendToKindle"  type="submit">SendToKindle</button> #}
+{# <button class="button" type="submit">Download</button> #}
+</table>
+
+<div class="hidden collapsible">
+<h2 style="text-align: center" class="collapsbtn">Advanced</h2> 
+
+{#
+<table id="rangeSelectTable">
+    <tbody><tr id="rangeStartChapterRow">
+        <td>First Chapter</td>
+        <td><select id="selectRangeStartChapter"></select></td>
+        <td><input id="showChapterUrlsCheckbox" type="checkbox" name="showChapterUrlsCheckbox" value="false"></td>
+        <td>Show URLs of Chapters</td>
+    </tr>
+    <tr id="rangeEndChapterRow">
+        <td>Last Chapter</td>
+        <td><select id="selectRangeEndChapter"></select></td>
+    </tr>
+    <tr id="rangeChapterCountRow">
+        <td>Chapters Count:</td>
+        <td><span id="spanChapterCount">206</span></td>
+    </tr>
+</tbody></table>
+#}
+
+<div class="collapsible collapsible-content">
+    
+<h3 style="text-align: center"  class="collapsbtn">Chapters</h3> 
+<div class="form-table collapsible-content">
+  <button id="selectAllUrldButton" type="button" onclick="selectAllUrls(true)">Select All</button> 
+  <button id="unselectAllUrldButton"type="button" onclick="selectAllUrls(false)">Unselect All</button> 
+</div>
+
+<table id="chapterUrlsTable" class="form-table collapsible-content">
+<tbody>
+<tr>
+    <td colspan=2> 
+    </td>
+</tr>
+  {% for idx, (text, href) in CHAPTERS -%}
+    <tr class="form-row ">
+      <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked> </td>
+      <td> <input type="value"  id="{{ idx }}_text" name="chapter-text-{{ idx }}"value="{{ text }}"> </td>
+      <td> <input hidden type="value"  id="{{ idx }}_url" name="chapter-url-{{ idx }}"  value="{{ href }}"> </td>
+    </tr>
+  {%- endfor %}
+  </div>
+</tbody>
+</table>
+
+</div>
+</div>
+
+</div>
+
+<script>
+function selectAllUrls(selection) {
+    urlTable = document.getElementById("chapterUrlsTable");
+    checkboxes = urlTable.querySelectorAll('input[type=checkbox]');
+    for (element in checkboxes) {
+        element.checked = true;
+    }
+    for(var i=0; i<checkboxes.length; i++){  
+           checkboxes[i].checked = selection;  
+                } 
+    // querySelectorAll(".dropbtn")
+    
+}
+
+document.getElementById("sendToKindleButton").addEventListener("click", function () {
+    var formData = new FormData(document.getElementById("form"));
+    
+    formData.append("sendToKindle", true);
+
+    // Create a new AJAX request
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "{{ ACTION }}", true);
+    
+    // Handle the AJAX response
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            alert('Form submitted successfully');
+        } else {
+            alert('Form submission failed');
+        }
+    };
+    xhr.send(formData);
+    console.log("SendToKindle");
+});
+
+
+</script>
+
+
+<style>
+.hidden .collapsbtn {
+  color: #222;
+}
+
+.collapsbtn {
+  /* background-color: #11111111;*/
+  cursor: pointer;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+ text-decoration: underline;
+}
+
+.collapsbtn:hover {
+  color: #336;
+</style>
+
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'header.html' %}
 
+
 {% block head %} 
 <title>{{ TITLE }}</title>
 {% endblock %} 
@@ -7,24 +8,36 @@
 {% block body %}
 <h1 class="header-title">{{ TITLE }}</h1>
 
-
 <div class="container center">
     <div>{% block preform %}{% endblock %}</div> 
-<p > {{ DERCRIPTION }} </p>
+<p > {{ DESCRIPTION }} </p>
 <hr style="margin-bottom:20px"></hr>
 
-  {% import 'macros/render_fields.j2' as macros %}
-  <form action="{{ ACTION }}" method="POST"
+<form id="form" action="{{ ACTION }}" method="POST" style="width: 100%;"
 {% if NO_REDIRECT_ONSUBMIT  -%}
       onsubmit="submitForm(event)"
 {%- endif %}>
+    {% block form_body %}
+    <table class="form-table">
+        <colgroup>
+           <col span="1" style="width: 20%;">
+           <col span="1" style="width: 80%;">
+        </colgroup>
 
-    {{ macros.render_fields(DATA) }}
+        <tbody>
+
+        {% import 'macros/render_fields.j2' as macros %}
+        {{ macros.render_fields(DATA) }}
+        </tbody>
+
+        {% block form_extension %}
+        {% endblock %}
+
+    </table>
 
     <button class="button" type="submit">{{ SUBMIT | default('Submit') }}</button>
-    
-    {% block form_extension %}
     {% endblock %}
+
   </form>
 
 <!-- Import and Export options -->
@@ -43,7 +56,7 @@ function submitForm(event) {
     // Create a new AJAX request
     var xhr = new XMLHttpRequest();
     xhr.open('POST', "{{ ACTION }}", true);
-
+    
     // Handle the AJAX response
     xhr.onload = function () {
         if (xhr.status === 200) {

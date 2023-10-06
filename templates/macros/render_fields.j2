@@ -6,19 +6,24 @@
         {{ render_fields(entry.data) }}
       </div>
     {% else %}
-      <div class="form-row">
+      <tr class="form-row">
+        <td>
           <label class="label " for="{{ key }}">{{ entry.label }}:</label>
+        </td>
+        <td>
           {% if not entry.type or entry.type == "str"  %}
-        <input type="{{ entry.field_type | default('text') }}"  {% if entry.hidden %} hidden="true" {% endif %} id="{{ key }}" name="{{ entry.name }}" value="{{ entry.text | default('') }}">
+        <input type="{{ entry.field_type | default('value') }}"  {% if entry.hidden %} hidden="true" {% endif %} id="{{ key }}" name="{{ entry.name }}" value="{{ entry.value | default('') }}">
           {% elif entry.type == "bool" %}
         <label class="switch">
-        <input type="checkbox" id="{{ key }}" name="{{ key }}" checked="{{ entry.value }}">
+        <input type="hidden" id="{{ key }}" name="{{ key }}" value='0'>
+        <input type="checkbox" id="{{ key }}" name="{{ key }}" value='1' {% if entry.value %} checked {% endif %}>
         <span class="slider round"></span>
         </label>
           {% else %}
                 <!-- Unknown form value type -->
           {% endif %}
-      </div>
+        </td>
+      </tr>
     {% endif %}
   {%- endfor %}
 {% endmacro %}
