@@ -1,9 +1,8 @@
 
-import requests
-from bs4 import BeautifulSoup 
 from src.webpages.webpage_base import WebpageManager_Base
+import src.download_manager as dm
 
-from ebooklib import epub
+from urllib.parse import urljoin
 
 # This file is intended to contain all the royalroad specific functionality
 
@@ -22,8 +21,7 @@ class RoyalRoad(WebpageManager_Base):
             return self.fiction_page_bs
         
         fiction_page_url = self.book.get('entry_point')
-        fiction_page = requests.get(fiction_page_url).text
-        self.fiction_page_bs = BeautifulSoup(fiction_page, features="lxml")
+        self.fiction_page_bs = dm.get_html(fiction_page_url, ignore_cache=True)
         return self.fiction_page_bs
     
     def get_default_book_title(self):
@@ -57,45 +55,15 @@ class RoyalRoad(WebpageManager_Base):
     
         return first_column_data
     
-    
-    def download_book(self, config_data, local_epub_filepath):
-        #if already in server
-        # if(os.path.exists(local_ebook_filepath)):
-        #     return local_ebook_filepath
-    
-        ebook = epub.EpubBook()
-        # mandatory metadata
-        ebook.set_identifier(self.id)
-        ebook.set_title(config_data.get('title'))
-        ebook.set_language(config_data.get('language'))
-        ebook.add_author(config_data.get('author'))
-        #collect chapters
+    def download_book_to_server(self, config_data, local_epub_filepath):
+        self.init_epub(config_data)
 
-        from urllib.parse import urljoin
-
-        for index, url, text in config_data.get('chapters'):
-            print(f'downloading chapter {index}')
+        for index, url, title in config_data.get('chapters'):
             chapter_url = urljoin(self.base_url, url)
-            print(chapter_url)
-
-            chapter_page = requests.get(chapter_url).text
-            chapter_page_bs = BeautifulSoup(chapter_page, features="lxml")
-
-            temp_chapter = epub.EpubHtml(title = text,
-                                         file_name = f'chapter_{index}.xhtml')
+            chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
             # TODO: This needs some work! For example, there is no images and no tables
-            temp_chapter.set_content( 
-                    str(chapter_page_bs.select('div.chapter-inner'))
-                # str(chapter_page_bs.select_one('h1')) +
-                # ''.join([str(x) for x in chapter_page_bs.select('div.chapter-content p')])
-            )
-            ebook.add_item(temp_chapter)
-            ebook.toc.append(temp_chapter)
-            ebook.spine.append(temp_chapter)
+            content = str(chapter_page_bs.select('div.chapter-inner'))
+            self.add_chapter(title, content)
     
-        print('chapters packed')
-        ebook.add_item(epub.EpubNcx())
-        ebook.add_item(epub.EpubNav())
-        epub.write_epub(local_epub_filepath, ebook)
-        print('book in the server')
+        self.write_epub(local_epub_filepath)

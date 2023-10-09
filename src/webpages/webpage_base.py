@@ -1,4 +1,7 @@
 
+from ebooklib import epub
+import src.download_manager as dm
+
 class WebpageManager_Base():
     download_config_enrtires = {
         "title": {'label': "Title"},
@@ -7,6 +10,8 @@ class WebpageManager_Base():
         "cover_image": {'label': "Cover Image URL"},
         "include_images"  : {'label': 'Include Images', 'type': 'bool' },
      }
+
+    default_kindle_css = "./data/kindle.css"
 
     def __init__(self, id, book):
         self.id = id
@@ -50,3 +55,38 @@ class WebpageManager_Base():
 
         download_config_data['chapters'] = sorted(chapters, key=lambda x: x[0])
         return download_config_data
+
+
+    def init_epub(self, config_data):
+        self.ebook = epub.EpubBook()
+        # mandatory metadata
+        self.ebook.set_identifier(self.id)
+        self.ebook.set_title(config_data.get('title'))
+        self.ebook.set_language(config_data.get('language'))
+        self.ebook.add_author(config_data.get('author'))
+
+        with open(self.default_kindle_css, 'r') as f:
+            css = epub.EpubItem(uid='default', file_name="style/kindle.css", \
+                    media_type="text/css", content=f.read())
+            self.ebook.add_item(css)
+
+        cover_img_url = config_data.get('cover_image')
+        if cover_img_url:
+            cover_img_data = dm.get_and_cache_image_data(cover_img_url)
+            self.ebook.set_cover("cover.png", cover_img_data)
+
+        self.chapter_count = 0;
+ 
+    def add_chapter(self, title, contnet): # add_images_in_content=True)
+        self.chapter_count += 1;
+        chapter = epub.EpubHtml(title = title,
+                    file_name = f'chapter_{self.chapter_count}.xhtml')
+        chapter.set_content(contnet)
+        self.ebook.add_item(chapter)
+        self.ebook.toc.append(chapter)
+        self.ebook.spine.append(chapter)
+
+    def write_epub(self, local_epub_filepath):
+        self.ebook.add_item(epub.EpubNcx())
+        self.ebook.add_item(epub.EpubNav())
+        epub.write_epub(local_epub_filepath,self.ebook)

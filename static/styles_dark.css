@@ -13,6 +13,10 @@ body.dark-mode {
     background-color: #A076F9;
 }
 
+.dark-mode .header {
+  background: #002b36;  
+}
+
 .dark-mode h1 {
     color: #fff;
 }
