@@ -1,6 +1,7 @@
-
 from ebooklib import epub
 import src.download_manager as dm
+
+import re
 
 class WebpageManager_Base():
     download_config_enrtires = {
@@ -9,13 +10,31 @@ class WebpageManager_Base():
         "language": {'label': "Language"},
         "cover_image": {'label': "Cover Image URL"},
         "include_images"  : {'label': 'Include Images', 'type': 'bool' },
+        # TODO: "epub_filename": {'label': "Cover Image URL"},
      }
 
     default_kindle_css = "./data/kindle.css"
 
+    url_pattern = None
+
     def __init__(self, id, book):
         self.id = id
         self.book = book;
+
+    @classmethod
+    def match_url(cls, url):
+        if cls.url_pattern is None:
+            return None
+        return re.match(cls.url_pattern, url)
+
+    def get_book_data(self, key):
+        value = self.book.get(key)
+        if not value is None:
+            return value
+        default_method = getattr(self, 'get_default_book_%s' % key)
+        if not default_method is None:
+            return default_method()
+        return None
 
     # This function is meant to retrieve information like title, author and chapteres available from the books coverpage, that is the 'fiction page' in the case of royalroad
     def get_default_download_config_data(self):
@@ -24,13 +43,13 @@ class WebpageManager_Base():
 
         for key, value in self.download_config_enrtires.items():
             data[key] = value.copy() | \
-                    { "name": key, 'value': getattr(self, 'get_default_book_%s' % key)() };
+                    { 'value': getattr(self, 'get_default_book_%s' % key)() };
         return data
 
     def genereate_download_config_hash(self, download_config_data):
         from hashlib import sha256
         import json, base64
-        
+
         shahash = sha256(json.dumps(download_config_data).encode('utf-8'))
         return base64.b64encode(shahash.digest()).decode().replace('/','_')
 
@@ -43,8 +62,8 @@ class WebpageManager_Base():
                 # This is a work around, since an unchecked checkbox is simply not included in the form_data
                 download_config_data[key] = '1' in form_data.getlist(key)
             else:
-                download_config_data[key] = form_data.get(key) 
-    
+                download_config_data[key] = form_data.get(key)
+
         chapters = []
         for key, value in form_data.items():
             if key.startswith('chapter-cbx'):
@@ -55,7 +74,6 @@ class WebpageManager_Base():
 
         download_config_data['chapters'] = sorted(chapters, key=lambda x: x[0])
         return download_config_data
-
 
     def init_epub(self, config_data):
         self.ebook = epub.EpubBook()
@@ -76,7 +94,7 @@ class WebpageManager_Base():
             self.ebook.set_cover("cover.png", cover_img_data)
 
         self.chapter_count = 0;
- 
+
     def add_chapter(self, title, contnet): # add_images_in_content=True)
         self.chapter_count += 1;
         chapter = epub.EpubHtml(title = title,

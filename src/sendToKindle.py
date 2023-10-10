@@ -1,72 +1,73 @@
 #!/usr/bin/python3
 
-importsmtplib #importing the module
-importsys, os
+import smtplib #importing the module
+import sys, os
 
-fromdotenv import load_dotenv
-fromemail.mime.multipart import MIMEMultipart
-fromemail.mime.text import MIMEText
-fromemail.mime.base import MIMEBase
-fromemail import encoders
+from dotenv import load_dotenv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
-defsendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=None, target_filename=None):
-load_dotenv()
-if not receiver or not file:
-return
+def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=None, target_filename=None):
+    load_dotenv()
+    if not receiver or not file:
+        return
 
-password = os.environ.get("GMAIL_PASSWORD")
-print(password)
+    password = os.environ.get("GMAIL_PASSWORD")
+    print(password)
 
-message = constructMessage(sender, receiver, file, target_filename)
-sendEmail(sender, password, receiver, message)
+    message = constructMessage(sender, receiver, file, target_filename)
+    sendEmail(sender, password, receiver, message)
 
 
-defconstructMessage(sender_add, receiver_add, file, target_filename=None):
-message = MIMEMultipart()
+def constructMessage(sender_add, receiver_add, file, target_filename=None):
+    message = MIMEMultipart()
 
-if not target_filename:
-target_filename = file
+    if not target_filename:
+        target_filename = file
 
-message["From"] = sender_add
-message['To'] = receiver_add
-message['Subject'] = f"Your book {target_filename} has arrived!"
+    message["From"] = sender_add
+    message['To'] = receiver_add
+    message['Subject'] = f"Your book {target_filename} has arrived!"
 
-attach = open(file, "rb")
+    attach = open(file, "rb")
 
-obj = MIMEBase('application','octet-stream')
+    obj = MIMEBase('application','octet-stream')
 
-obj.set_payload((attach).read())
-encoders.encode_base64(obj)
-obj.add_header('Content-Disposition',"attachment; filename= "+target_filename)
+    obj.set_payload((attach).read())
+    encoders.encode_base64(obj)
+    obj.add_header('Content-Disposition',"attachment; filename= "+target_filename)
 
-message.attach(obj)
-attach.close()
-return message.as_string()
+    message.attach(obj)
+    attach.close()
+    return message.as_string()
 
-defsendEmail(sender_add, password, receiver_add, message):
-#creating the SMTP server object by giving SMTP server address and port number
-smtp_server=smtplib.SMTP_SSL("smtp.gmail.com",465)
+def sendEmail(sender_add, password, receiver_add, message):
+    #creating the SMTP server object by giving SMTP server address and port number
+    smtp_server=smtplib.SMTP_SSL("smtp.gmail.com",465)
 
-smtp_server.login(sender_add,password)
+    smtp_server.login(sender_add,password)
 
-smtp_server.sendmail(sender_add, receiver_add, message)
-print('Successfully the mail is sent') 
+    smtp_server.sendmail(sender_add, receiver_add, message)
+    print('Successfully the mail is sent')
 
-smtp_server.quit() #terminating the server
+    smtp_server.quit() #terminating the server
 
-defusage(prg):
-print(f"Usage: {prg} <file>")
-print("")
-print("Send a file to my kinlde using email!")
+def usage(prg):
+    print(f"Usage: {prg} <file>")
+    print("")
+    print("Send a file to my kinlde using email!")
+
 
 if__name__ == '__main__':
-if (sys.argv[1] == '--help'):
-usage(sys.argv[0])
-sys.exit(0)
+    if (sys.argv[1] == '--help'):
+        usage(sys.argv[0])
+        sys.exit(0)
 
-if len(sys.argv) < 2: 
-print("ERR: No enough arguments!")
-usage()
-sys.exit(1)
+    if len(sys.argv) < 2:
+        print("ERR: No enough arguments!")
+        usage()
+        sys.exit(1)
 
-sendToKindle(sys.argv[1])
+    sendToKindle(sys.argv[1])

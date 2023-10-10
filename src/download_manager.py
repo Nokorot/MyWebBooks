@@ -1,10 +1,10 @@
 
-importrequests
-importos, io, hashlib
-importjson
+import requests
+import os, io, hashlib
+import json
 
-fromurllib.request import urlopen, Request
-frombs4 import BeautifulSoup
+from urllib.request import urlopen, Request
+from bs4 import BeautifulSoup
 
 #from bs4 import BeautifulSoup
 
@@ -18,89 +18,85 @@ hdrs= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML,
 'Accept-Language': 'en-US,en;q=0.8',
 'Connection': 'keep-alive'}
 
-defget_url_hash(url):
-return hashlib.md5(url.encode('utf-8')).hexdigest()
+def get_url_hash(url):
+    return hashlib.md5(url.encode('utf-8')).hexdigest()
 
-defget_cache_filepath(url, fileext=None):
-if fileext is None:
-fileext = ''
-return os.path.join(base_cache_dir, get_url_hash(url)) + fileext
+def get_cache_filepath(url, fileext=None):
+    if fileext is None:
+        fileext = ''
+    return os.path.join(base_cache_dir, get_url_hash(url)) + fileext
 
-defis_valid_cache(cache_filepath):
-# TODO: There should be a cache life time
+def is_valid_cache(cache_filepath):
+    # TODO: There should be a cache life time
 
-return os.path.isfile(cache_filepath)
+    return os.path.isfile(cache_filepath)
 
-defread_valid_cache_file(cache_filepath):
-with open(cache_filepath, 'rb') as f:
-return f.read()
+def read_valid_cache_file(cache_filepath):
+    with open(cache_filepath, 'rb') as f:
+        return f.read()
 
-defwrite_to_cache_file(content, cache_filepath):
-with open(cache_filepath, 'wb') as f:
-return f.write(content)
+def write_to_cache_file(content, cache_filepath):
+    with open(cache_filepath, 'wb') as f:
+        return f.write(content)
 
-defget_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
-if not ignore_cache:
-if cache_filepath is None:
-cache_filepath = get_cache_filepath(url, fileext)
-if is_valid_cache(cache_filepath):
-return read_valid_cache_file(cache_filepath)
+def get_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
+    if not ignore_cache:
+        if cache_filepath is None:
+            cache_filepath = get_cache_filepath(url, fileext)
+        if is_valid_cache(cache_filepath):
+            return read_valid_cache_file(cache_filepath)
 
-print(f"Downloading '{url}'");
-req = Request(url, headers=hdrs)
-with urlopen(req) as response:
-return response.read()
+    print(f"Downloading '{url}'");
+    req = Request(url, headers=hdrs)
+    with urlopen(req) as response:
+        return response.read()
 
-defget_and_cache_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
-if ignore_cache:
-content = get_data(url, fileext, ignoe_cache=True)
-else:
-if cache_filepath is None:
-cache_filepath = get_cache_filepath(url, fileext)
-if is_valid_cache(cache_filepath):
-return read_valid_cache_file(cache_filepath)
-content = get_data(url, fileext, ignore_cache=True)
+def get_and_cache_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
+    if ignore_cache:
+        content = get_data(url, fileext, ignoe_cache=True)
+    else:
+        if cache_filepath is None:
+            cache_filepath = get_cache_filepath(url, fileext)
+        if is_valid_cache(cache_filepath):
+            return read_valid_cache_file(cache_filepath)
+        content = get_data(url, fileext, ignore_cache=True)
 
-write_to_cache_file(content, cache_filepath)
-return content
-
+    write_to_cache_file(content, cache_filepath)
+    return content
 
 ##TODO: Instead of having a info file for each image, could just have one for all of them
-defread_cache_info_file(filepath):
-with open(filepath, 'r') as f:
-return json.load(f)
+def read_cache_info_file(filepath):
+    with open(filepath, 'r') as f:
+        return json.load(f)
 
-defwrtie_cache_info_file(info, filepath):
-with open(filepath, 'w') as f:
-f.write(json.dumps(info))
+def wrtie_cache_info_file(info, filepath):
+    with open(filepath, 'w') as f:
+        f.write(json.dumps(info))
 
-defget_html(url, ignore_cache=False):
-content = get_data(url, fileext='.html', ignore_cache=ignore_cache)
-return BeautifulSoup(content, features="lxml")
+def get_html(url, ignore_cache=False):
+    content = get_data(url, fileext='.html', ignore_cache=ignore_cache)
+    return BeautifulSoup(content, features="lxml")
 
-defget_and_cache_html(url, ignore_cache=False):
-content = get_and_cache_data(url, fileext='.html', ignore_cache=ignore_cache)
-return BeautifulSoup(content, features="lxml")
+def get_and_cache_html(url, ignore_cache=False):
+    content = get_and_cache_data(url, fileext='.html', ignore_cache=ignore_cache)
+    return BeautifulSoup(content, features="lxml")
 
-defget_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height=8096):
-cache_filepath = "%s_%u_%u.jpg" % (get_cache_filepath(url, fileext=''), max_width, max_height)
+def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height=8096):
+    cache_filepath = "%s_%u_%u.jpg" % (get_cache_filepath(url, fileext=''), max_width, max_height)
 
-if not ignore_cache and is_valid_cache(cache_filepath):
-return read_valid_cache_file(cache_filepath)
+    if not ignore_cache and is_valid_cache(cache_filepath):
+        return read_valid_cache_file(cache_filepath)
 
-content = get_and_cache_data(url, fileext=None, ignore_cache=ignore_cache)
-content_io = io.BytesIO(content)
+    content = get_and_cache_data(url, fileext=None, ignore_cache=ignore_cache)
+    content_io = io.BytesIO(content)
 
-from PIL import Image
-im = Image.open(content_io, 'r')
-width, height = im.size
+    from PIL import Image
+    im = Image.open(content_io, 'r')
+    width, height = im.size
 
-im.thumbnail((max_width, max_height))
-im.save(cache_filepath)
-return read_valid_cache_file(cache_filepath)
-
-
-
+    im.thumbnail((max_width, max_height))
+    im.save(cache_filepath)
+    return read_valid_cache_file(cache_filepath)
 
 ##The Following is not really tested but it is way to complicated anyway
 #def get_and_cache_image_data(url, cache_info_filepath=None, ignore_cache=False, max_width=None, max_height=None):
