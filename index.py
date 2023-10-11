@@ -24,6 +24,8 @@ html_min = HTMLMIN(app)
 
 if not os.path.exists('./out'):
     os.makedirs("./out")
+if not os.path.exists('./cache'):
+    os.makedirs("./cache")
 
 @app.route("/")
 def home():
@@ -58,3 +60,4 @@ for source_file, url_prefix in blueprints.items():
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))
+
