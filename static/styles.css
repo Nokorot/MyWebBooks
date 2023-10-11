@@ -9,12 +9,14 @@ form{
   display:table;
 }
 
-div.center {
-  text-align: -webkit-center;
+.center {
+  /* text-align: -webkit-center; */
+  display: flex;
+  justify-content: center
 }
 
 .container a {
-  display:table-cell;
+  display: table-cell;
 }
 
 h1 {

@@ -3,6 +3,7 @@ from .webpage_base import WebpageManager_Base
 import src.download_manager as dm
 
 from urllib.parse import urljoin
+import json
 
 # This file is intended to contain all the royalroad specific functionality
 class RoyalRoadWM(WebpageManager_Base):
@@ -56,15 +57,24 @@ class RoyalRoadWM(WebpageManager_Base):
 
         return first_column_data
 
-    def download_book_to_server(self, config_data, local_epub_filepath):
+    def download_book_to_server(self, config_data, local_epub_filepath, status_file):
         self.init_epub(config_data)
 
-        for index, url, title in config_data.get('chapters'):
+        chapters = config_data.get('chapters')
+        for index, url, title in chapters:
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
             # TODO: This needs some work! For example, there is no images and no tables
             content = str(chapter_page_bs.select('div.chapter-inner')[0])
             self.add_chapter(title, content)
+
+            status = {
+                    "status": "Downloading", 
+                    "percentage": "%u%s" % ( 100*(index+1) // len(chapters), '%')
+                    # "download_url": download_url
+            } 
+            with open(status_file, 'w') as f:
+                f.write(json.dumps(status));
 
         self.write_epub(local_epub_filepath)

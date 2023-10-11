@@ -2,6 +2,7 @@
 ## Project Spesific
 out
 cache
+status
 
 ### Python ###
 __pycache__/

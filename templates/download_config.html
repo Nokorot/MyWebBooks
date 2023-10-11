@@ -3,6 +3,15 @@
 {% import 'macros/render_fields.j2' as macros %}
 
 
+{% block preform %}
+<div id="status" style="display:none;">
+    <p id="status-text"></p>
+    <div class="w3-border">
+      <div id="status-bar"  class="w3-grey" style="height:24px;width:20%"></div>
+    </div>
+</div>
+
+{% endblock %}
 
 {% block form_body %}
 
@@ -20,8 +29,8 @@
 
 <table class="center">
 <tbody>
-    <td> <button class="button delete-button fa-solid fa-download" type="submit">Download</button> </td>
-    <td> <a id="sendToKindleButton" class="button delete-button fa-solid" href="#">SendToKindle</a> </td>
+    <td><a id="downloadButton" class="button delete-button fa-solid fa-download" href="#">Download</a></td>
+    <td><a id="sendToKindleButton" class="button delete-button fa-solid" href="#">SendToKindle</a></td>
 </tbody>
 {#
 <button class="button delete-button fa-solid fa-download" name="download" value="Download" type="submit">Download</button>
@@ -94,6 +103,85 @@ function selectAllUrls(selection) {
     // querySelectorAll(".dropbtn")
     
 }
+
+let nIntervId;
+
+function checkDownloadStatus(download_id, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "{{ url_for('books.download_status') }}", true);
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    // document.getElementById('status').innerHTML = download_id;
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            // document.getElementById('status').innerHTML = xhr.response;
+            console.log("Status response: ");
+            console.log(xhr.response);
+            response = JSON.parse(xhr.response);
+    
+            if (response['status'] === "Downloading") {
+                document.getElementById('status-bar').style.width = response['percentage'];
+            } else {
+                document.getElementById('status').style.display = 'none'
+                clearInterval(nIntervId);
+                callback(response);
+            }
+
+            // alert('New Form successfully');
+            // setInterval(checkDownloadStatus, 500, download_id);
+        } else {
+            alert('New Form submission failed');
+        }
+    };
+
+    console.log("download_id: " + String(download_id));
+    xhr.send(JSON.stringify({ "download_id": download_id}));
+}
+
+// let Downloading = True;
+function downloadBook() {
+    // if (Downloading)
+    //     return;
+    // Downloading = True;
+
+    var formData = new FormData(document.getElementById("form"));
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', document.URL, true); // "{{ url_for('books.download_config', id=_id) }}"
+    
+    on_finished = function (status) {
+        if (response['status'] !== "Finished") {
+            console.log("Download NOT Finished");
+            return;
+        }
+        console.log("Download Finished");
+        // document.getElementById('status').style.display = 'none'
+
+        window.location.href = status['download_url'];
+    }
+
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            // document.getElementById('status').innerHTML = "HEU";
+            // checkDownloadStatus(xhr.response);
+
+            // document.getElementById('status').;
+            document.getElementById('status').style.display = 'block'
+            document.getElementById('status-text').style.display = 'Downloading'
+            document.getElementById('status-bar').style.width = '0%'
+
+            console.log("Download response: ");
+            console.log(xhr.response);
+            nIntervId = setInterval(checkDownloadStatus, 500, xhr.response, on_finished);
+            // alert('Form submitted successfully');
+        } else {
+            alert('Form submission failed');
+        }
+    };
+    xhr.send(formData);
+}
+
+document.getElementById("downloadButton").addEventListener("click", downloadBook);
 
 document.getElementById("sendToKindleButton").addEventListener("click", function () {
     var formData = new FormData(document.getElementById("form"));

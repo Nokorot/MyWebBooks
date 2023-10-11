@@ -24,7 +24,7 @@
               <!--  <input type="text" name = "del" hidden value="{{ data['_id'] }}"> -->
               <a href="{{ url_for('books.delete_book', id = data['_id']) }}" class = 'button delete-button fa-solid fa-trash-can'></a>
               {# <a href="{{ url_for('books.send_to_kindle', id = data['_id']) }}" class="button delete-button fa-solid"> Send To Kindle </a> #}
-              <a href="{{ url_for('books.download_epub', id = data['_id']) }}", id = "download-book" class="button delete-button fa-solid fa-download"></a>
+              <a href="{{ url_for('books.download_config', id = data['_id']) }}", id = "download-book" class="button delete-button fa-solid fa-download"></a>
               <!-- <canvas id="loading-bar"></canvas> -->
               </div>
               <!-- <canvas id="loading-bar" hidden></canvas> -->     
@@ -32,8 +32,6 @@
         {% endfor %}
     </div>
     <script src="/static/epub/test.js"></script>
-
-
 
 
 <script>

@@ -24,6 +24,8 @@ html_min = HTMLMIN(app)
 
 if not os.path.exists('./out'):
     os.makedirs("./out")
+if not os.path.exists('./status'):
+    os.makedirs("./status")
 if not os.path.exists('./cache'):
     os.makedirs("./cache")
 
