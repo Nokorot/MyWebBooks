@@ -14,12 +14,18 @@ import src.mongodb_api_1 as mongodb_api # import *
 from src.login import login_required
 
 import src.user_data as user_data
+from src.book_data import BookData, load_bookdata
 
 @blueprint.route('/new_book',methods=['GET', 'POST'])
 @login_required
 def new_book():
     if request.method == 'POST':
         entry_point = request.form.get('entry_point')
+        print(request.form)
+        
+        if entry_point is None:
+            return redirect(url_for('home'))
+    
 
         from src.webpages import match_url
         wm_class = match_url(entry_point)
@@ -53,8 +59,8 @@ def new_book():
         "DERCRIPTION": "",
         "SUBMIT": "Submit",
         "DATA": data,
-        "ACTION": "",
-        "USER_PIC": g.user['userinfo']['picture']
+        "ACTION": url_for('books.new_book'),
+        # "USER_PIC": g.user['userinfo']['picture']
     }
 
     return render_template('forms/new_book.html', **kwargs)
@@ -62,14 +68,15 @@ def new_book():
 
 @blueprint.route('/edit_book/<id>',methods=['GET', 'POST'])
 @login_required
-def edit_book(id):
-    id = ObjectId(id)
-    book = mongodb_api.findOne('rr', 'books', {'_id': id})
-    if book['owner'] != g.user['userinfo']['name']:
+@load_bookdata('id', 'book')
+def edit_book(id, book):
+    if not book.is_owner(g.user['userinfo']['name']):
         redirect(url_for('books.list_books'))
 
     if request.method == 'POST':
-    # Update the JSON data with the form values
+        # TODO: This is severely outdated, should use the wm_class object 
+
+        # Update the JSON data with the form values
         import json
         with open("data/empty_book_form.json", 'r') as f:
             book_form_template = json.load(f)
@@ -81,7 +88,6 @@ def edit_book(id):
         else:
             book_html = BeautifulSoup(r.text)
 
-
         for key in book_form_template.keys():
             book_form_template[key] = form.get(key)
             if book_form_template[key] == '':
@@ -92,12 +98,9 @@ def edit_book(id):
                 elif key == 'author':
                     book_form_template[key] = book_html.select_one('div.fic-title a').text
 
-        mongodb_api.updateOne('rr','books', {'_id': id}, book_form_template)
+        mongodb_api.updateOne('rr','books', {'_id': ObjectId(id)}, book_form_template)
         flash("data updated!")
         return 'Data updated successfully.'
-
-    # Retrieve the data from MongoDB
-    book = mongodb_api.findOne('rr', 'books', {'_id': id})
 
     data = {
         "title": {'label': "Title"},
@@ -246,30 +249,17 @@ def list_books():
 @blueprint.route('/delete_book/<id>')
 @login_required
 def delete_book(id):
-    id = ObjectId(id)
-    book = mongodb_api.findOne('rr', 'books', {'_id': id})
-    print(book, g.user['userinfo']['name'])
-    if book['owner'] == g.user['userinfo']['name']:
-        mongodb_api.deleteOne('rr', 'books', {"_id": id})
+    with BookData(id) as book:
+        if book['owner'] == g.user['userinfo']['name']:
+            book.delete();
     return redirect(url_for('books.list_books'))
 
 @blueprint.route('download_epub/<id>',methods=['GET', 'POST'])
 @login_required
-def download_epub(id):
-    book = mongodb_api.findOne('rr', 'books', {'_id': ObjectId(id)})
+@load_bookdata('id', 'book')
+def download_epub(id, book):
+    webpage_manager = book.get_wm()
 
-    # Here the plan is to include the webpage_manager specified for this particular book on mongodb,
-    # but it is hard-coded to royalroad for now.
-    # from src.webpages.royalroad import RoyalRoad
-
-    from src.webpages import get_wm_class
-    wm_class = get_wm_class('RoyalRoadWM')
-    webpage_manager = wm_class(id, book)
-
-    # For example, we can have a book_crawler webpage_manager,
-    # with custom css selectors for the chapter content, title ... and the next chapter button
-
-    print("METHOD", request.method)
     if request.method == 'POST':
         # local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
 
@@ -308,16 +298,8 @@ def download_epub(id):
             flash('file not found')
             return url_for('books.list_books')
 
-    # Some webpages, may have some special cases
-    # if webpage_manager.additional_entries:
-    #     data |= webpage_manager.additional_entries;
-
     data = webpage_manager.get_default_download_config_data()
     chapters = webpage_manager.get_book_chapters_list()
-
-    # for key, value in data.items():
-    #     data[key]["name"] = key
-    #     data[key]["value"] = book_data.get(key)
 
     kwargs = {
     "TITLE": "Download Config",

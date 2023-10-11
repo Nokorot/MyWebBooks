@@ -25,6 +25,7 @@ class WebpageManager_Base():
     def match_url(cls, url):
         if cls.url_pattern is None:
             return None
+        print(cls.url_pattern, url)
         return re.match(cls.url_pattern, url)
 
     def get_book_data(self, key):
