@@ -16,6 +16,8 @@ from src.login import login_required
 import src.user_data as user_data
 from src.book_data import BookData, load_bookdata
 
+import json
+
 @blueprint.route('/new_book',methods=['GET', 'POST'])
 @login_required
 def new_book():
@@ -254,17 +256,61 @@ def delete_book(id):
             book.delete();
     return redirect(url_for('books.list_books'))
 
-@blueprint.route('download_epub/<id>',methods=['GET', 'POST'])
+@blueprint.route('download_status',methods=['POST'])
+# @login_required
+def download_status():
+    # download_id = request.form.get('download_id') \
+    #         or  request.args.get('download_id') \
+    #         or  request.json.get('download_id') 
+    download_id = request.json.get('download_id') 
+    
+    if download_id is None:
+        return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
+
+    status_file = 'status/{}.json'.format(download_id)
+    if (not os.path.exists(status_file)):
+        return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'status_file does not exists'}"
+ 
+    with open(status_file, 'r') as f:
+        return f.read()
+
+    print("Status request with id: " + str(download_id))
+    return "Status"
+
+@blueprint.route('download_epub_file/<download_id>',methods=['GET'])
+def download_epub_file(download_id):
+    # download_id = request.json.get('download_id') 
+    # if download_id is None:
+    #     return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
+
+    local_epub_filepath = 'out/{}.epub'.format(download_id)
+    if (not os.path.exists(local_epub_filepath)):
+        return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
+
+    download_config_file = 'out/config_{}.json'.format(download_id)
+    print(download_config_file)
+    if (not os.path.exists(download_config_file)):
+        return "{'status': 'ERROR', 'error_code': 3, 'error_msg': 'download_config_file does not exists'}"
+
+    with open(download_config_file, 'r') as f:
+        config_data = json.load(f)
+
+    return send_file(local_epub_filepath, as_attachment = True, \
+        download_name="%s.epub" % config_data.get('title'))
+
+    
+
+@blueprint.route('download_config/<id>',methods=['GET', 'POST'])
 @login_required
 @load_bookdata('id', 'book')
-def download_epub(id, book):
-    webpage_manager = book.get_wm()
+def download_config(id, book):
+    wm = book.get_wm()
 
     if request.method == 'POST':
         # local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
 
-        config_data = webpage_manager.parse_download_config_data_form(request.form)
-        datahash = webpage_manager.genereate_download_config_hash(config_data)
+        config_data = wm.parse_download_config_data_form(request.form)
+        datahash = wm.genereate_download_config_hash(config_data)
         # TODO: Store the config_data along with the epub.
 
         local_epub_filepath = 'out/{}.epub'.format(datahash)
@@ -272,8 +318,34 @@ def download_epub(id, book):
         # if now already in server download it
         # if(not os.path.exists(local_epub_filepath)):
 
-        webpage_manager.download_book_to_server(config_data, local_epub_filepath)
 
+        download_url = url_for("books.download_epub_file", download_id=datahash)
+        def download_the_book():
+            status_file = 'status/{}.json'.format(datahash)
+            with open(status_file, 'w') as f:
+                f.write('{"status": "Downloading"}')
+
+            download_config_file = 'out/config_{}.json'.format(datahash)
+            with open(download_config_file, 'w') as f:
+                f.write(json.dumps(config_data))
+
+
+            wm.download_book_to_server(config_data, local_epub_filepath, status_file)
+            
+            status = {
+                    "status": "Finished", 
+                    "download_url": download_url
+            } 
+            with open(status_file, 'w') as f:
+                f.write(json.dumps(status));
+        
+
+        import threading
+        thread = threading.Thread(target = download_the_book)
+        thread.start()
+        # download_the_book()
+            
+        return datahash
 
         if request.form.get('sendToKindle'):
             from .sendToKindle import sendToKindle
@@ -298,17 +370,14 @@ def download_epub(id, book):
             flash('file not found')
             return url_for('books.list_books')
 
-    data = webpage_manager.get_default_download_config_data()
-    chapters = webpage_manager.get_book_chapters_list()
+    data = wm.get_default_download_config_data()
+    chapters = wm.get_book_chapters_list()
 
     kwargs = {
-    "TITLE": "Download Config",
-    "DESCRIPTION": "",
-    "SUBMIT": "Download",
-    "DATA": data,
-    "CHAPTERS": list(enumerate(chapters)),
-    "NO_REDIRECT_ONSUBMIT": False,
-    "INCLUDE_IMPORT_EXPORT": False,
-    "ACTION": url_for('books.download_epub', id=id),
+        "TITLE": "Download Config",
+        "DESCRIPTION": "",
+        "SUBMIT": "Download",
+        "DATA": data,
+        "CHAPTERS": list(enumerate(chapters)),
     }
     return render_template('download_config.html', **kwargs)
