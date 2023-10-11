@@ -43,8 +43,7 @@ class WebpageManager_Base():
         # book_data = webpage_manager.get_book_data(book)
 
         for key, value in self.download_config_enrtires.items():
-            data[key] = value.copy() | \
-                    { 'value': getattr(self, 'get_default_book_%s' % key)() };
+            data[key] = { **value, 'value': getattr(self, 'get_default_book_%s' % key)() };
         return data
 
     def genereate_download_config_hash(self, download_config_data):

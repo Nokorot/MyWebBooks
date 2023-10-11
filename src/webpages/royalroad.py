@@ -7,7 +7,8 @@ import json
 
 # This file is intended to contain all the royalroad specific functionality
 class RoyalRoadWM(WebpageManager_Base):
-    download_config_enrtires = WebpageManager_Base.download_config_enrtires | {
+    download_config_enrtires =   {
+        **WebpageManager_Base.download_config_enrtires,
         "include_authors_notes": {'label': 'Include Authors Notes', 'type': 'bool', 'value': False },
     }
 
