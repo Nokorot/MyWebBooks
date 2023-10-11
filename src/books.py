@@ -260,8 +260,11 @@ def download_epub(id):
 
     # Here the plan is to include the webpage_manager specified for this particular book on mongodb,
     # but it is hard-coded to royalroad for now.
-    from src.webpages.royalroad import RoyalRoad
-    webpage_manager = RoyalRoad(id, book)
+    # from src.webpages.royalroad import RoyalRoad
+
+    from src.webpages import get_wm_class
+    wm_class = get_wm_class('RoyalRoadWM')
+    webpage_manager = wm_class(id, book)
 
     # For example, we can have a book_crawler webpage_manager,
     # with custom css selectors for the chapter content, title ... and the next chapter button
