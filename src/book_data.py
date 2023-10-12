@@ -3,6 +3,8 @@ from bson.objectid import ObjectId
 import src.mongodb_api_1 as mongodb_api # import *
 import functools
 
+from src.webpages import get_wm_class, match_url
+
 def load_bookdata(id_name='id', book_data_name='book'):
     def decorator(func):
         @functools.wraps(func)
@@ -48,13 +50,13 @@ class BookData():
     def get_wm_class(self):
         wm_class_name = self.get('wm_class_name')
         if not wm_class_name is None:
-            from src.webpages import get_wm_class
             return get_wm_class(wm_class_name)
         entry_point = self.get('entry_point')
         if entry_point is None:
             return None 
-        from src.webpages import match_url
-        return match_url(entry_point)
+        wm_class = match_url(entry_point)
+        self.set('wm_class_name', wm_class.__name__)
+        return wm_class
 
     def get_wm(self):
         wm_class = self.get_wm_class()
