@@ -33,7 +33,7 @@ class BookData():
     def close(self):
         if self.dirty:
             obj_id = ObjectId(self.id)
-            mongodb_api.updateOne('rr','books', {'_id': obj_id}, book_form_template)
+            mongodb_api.updateOne('rr','books', {'_id': obj_id}, self.mongod_data)
 
     def get(self, key, default=None):
         return self.mongod_data.get(key, default)

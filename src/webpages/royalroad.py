@@ -66,8 +66,22 @@ class RoyalRoadWM(WebpageManager_Base):
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
+            content = chapter_page_bs.select('div.chapter-inner')[0]
+
+            for img in content.select('img'):
+                if config_data.get('include_images', False):
+                    epub_image_path = self.include_image(img.get('src'))
+                    # TODO: Should down-scale imeages, to a more appropriate resolution
+                    # imgobj = self.book.add_image(img.get('src'))
+                    # imgobj.add_reference(self)
+                    
+                    print(epub_image_path)
+                    print(img)
+                    img['src'] = epub_image_path
+                else:
+                    img.drop_tree()
+
             # TODO: This needs some work! For example, there is no images and no tables
-            content = str(chapter_page_bs.select('div.chapter-inner')[0])
             self.add_chapter(title, content)
 
             status = {
