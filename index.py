@@ -16,6 +16,15 @@ app.secret_key = os.environ['APP_SECRET_KEY']
 if __name__ == "__main__":
     app.config['DEBUG'] = True 
 
+import requests, time
+def sendSelfRequest():
+    requests.get(url_for('test'))
+    time.sleep(600)
+
+import threading
+thread = threading.Thread(target=sendSelfRequest)
+thread.start()
+
 # Enable HTML minification
 app.config['MINIFY_HTML'] = not app.config['DEBUG']
 # Skip removing comments
@@ -33,6 +42,11 @@ if not os.path.exists('./cache'):
 def home():
     return redirect(url_for('books.list_books'))
     # return render_template('home.html')
+
+@app.route('/test', methods = ['GET','POST'])
+def test():
+    import datetime
+    return "Welcome! The time is {}".format(str(datetime.datetime.now()))
 
 @app.before_request
 def load_logged_in_user():
