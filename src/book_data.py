@@ -73,7 +73,7 @@ class BookData():
         return wm_class(self.id, self)
 
     def is_owner(self, user_name):
-        return book.get('owner') == user_name 
+        return self.mongod_data.get('owner') == user_name 
 
     def __getitem__(self, key):
         return self.get(key)

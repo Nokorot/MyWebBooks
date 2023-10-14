@@ -23,12 +23,9 @@ import json
 def new_book():
     if request.method == 'POST':
         entry_point = request.form.get('entry_point')
-        # print(request.form)
-        
         if entry_point is None:
             return redirect(url_for('home'))
     
-
         from src.webpages import match_url
         wm_class, match = match_url(entry_point)
 
@@ -38,21 +35,15 @@ def new_book():
             flash("Unknown Entry point url! Only RoyalRoad is supported at the moment")
             return redirect(url_for('home'))
 
-        # wm = wm_class.new_book(entry_point)
         book_data_entries = wm_class.new_book_data( entry_point, match )
-         # {'fiction_page': url}
-
         mongodb_api.insertOne('rr', 'books', {
             'owner' : g.user['userinfo']['name'],
             'wm_class_name': wm_class.__name__,
             **book_data_entries,
-            # 'entry_point' : entry_point,
-            # wm.data_entries()
             })
 
         flash('New book created successfully!')
         return redirect(url_for('home'))
-
     data = {
         "entry_point": {
             'label': "Starting URL",
@@ -64,7 +55,6 @@ def new_book():
         "SUBMIT": "Submit",
         "DATA": data,
         "ACTION": url_for('books.new_book'),
-        # "USER_PIC": g.user['userinfo']['picture']
     }
 
     return render_template('forms/new_book.html', **kwargs)
@@ -76,6 +66,8 @@ def new_book():
 def edit_book(id, book):
     if not book.is_owner(g.user['userinfo']['name']):
         redirect(url_for('books.list_books'))
+
+    wm = book.get_wm()
 
     if request.method == 'POST':
         # TODO: This is severely outdated, should use the wm_class object 
@@ -106,30 +98,34 @@ def edit_book(id, book):
         flash("data updated!")
         return 'Data updated successfully.'
 
-    data = {
-        "title": {'label': "Title"},
-        "author": {'label': "author"},
-        "cover_image": {'label': "Cover Image URL"},
-        "entry_point": {'label': "Starting URL", 'value': "royalroad.com" },
-        "rss": {'label': "RSS URL", 'value': "" },
-        "section_css_selector": {'label': "Section CSS selector", 'value': "" },
-        "title_css_selector": {'label': "Title CSS selector", 'value': "" },
-        "paragraph_css_selector": {'label': "Paragraph CSS selector",'value': "" },
-        "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'value': "" }
-    }
-    for key, value in data.items():
-        data[key]["value"] = book[key]
+    # data = {
+    #     "title": {'label': "Title"},
+    #     "author": {'label': "author"},
+    #     "cover_image": {'label': "Cover Image URL"},
+    #     "entry_point": {'label': "Starting URL", 'value': "royalroad.com" },
+    #     "rss": {'label': "RSS URL", 'value': "" },
+    #     "section_css_selector": {'label': "Section CSS selector", 'value': "" },
+    #     "title_css_selector": {'label': "Title CSS selector", 'value': "" },
+    #     "paragraph_css_selector": {'label': "Paragraph CSS selector",'value': "" },
+    #     "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'value': "" }
+    # }
+    # for key, value in data.items():
+    #     data[key]["value"] = book[key]
+
+    entries = wm.get_config_entries()
+    from pprint import pprint
+    pprint(entries)
 
     kwargs = {
         "TITLE": "Edit Data",
         "DERCRIPTION": "",
-        "SUBMIT": "Save",
-        "DATA": data,
-        "NO_REDIRECT_ONSUBMIT": True,
-        "INCLUDE_IMPORT_EXPORT": True,
+        # "SUBMIT": "Save",
+        "DATA": entries,
+        # "NO_REDIRECT_ONSUBMIT": True,
+        # "INCLUDE_IMPORT_EXPORT": True,
         "ACTION": url_for('books.edit_book', id=id),
     }
-    return render_template('data_form.html', **kwargs)
+    return render_template('edit_book.html', **kwargs)
 
 @blueprint.route("/",methods=['GET', 'POST'])
 def head():
@@ -266,12 +262,40 @@ def download_status():
     print("Status request with id: " + str(download_id))
     return "Status"
 
+@blueprint.route('send_epub_file_to_kindle',methods=['POST'])
+def send_epub_file_to_kindle():
+    download_id = request.json.get('download_id') 
+    if download_id is None:
+        return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
+
+    print("Heu")
+
+    local_epub_filepath = 'out/{}.epub'.format(download_id)
+    if (not os.path.exists(local_epub_filepath)):
+        return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
+
+    download_config_file = 'out/config_{}.json'.format(download_id)
+    if (not os.path.exists(download_config_file)):
+        return "{'status': 'ERROR', 'error_code': 3, 'error_msg': 'download_config_file does not exists'}"
+
+    with open(download_config_file, 'r') as f:
+        config_data = json.load(f)
+
+
+    from .sendToKindle import sendToKindle
+    kindle_address = user_data.get_kindle_address()
+    if not kindle_address:
+        flash('The kindle email address was not set. Please enter and submit your kindle email address');
+        return "{'status': 'ERROR', 'error_code': 4, 'error_msg': 'The kindle_address was not set'}"
+
+    sendToKindle(file = local_epub_filepath,
+            target_filename="{}.epub".format(config_data.get('title')),
+            receiver = kindle_address);
+    flash('The email has been sent successfully')
+    return "{'status': 'Success'}"
+
 @blueprint.route('download_epub_file/<download_id>',methods=['GET'])
 def download_epub_file(download_id):
-    # download_id = request.json.get('download_id') 
-    # if download_id is None:
-    #     return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
-
     local_epub_filepath = 'out/{}.epub'.format(download_id)
     if (not os.path.exists(local_epub_filepath)):
         return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
@@ -287,7 +311,6 @@ def download_epub_file(download_id):
     return send_file(local_epub_filepath, as_attachment = True, \
         download_name="%s.epub" % config_data.get('title'))
 
-    
 
 @blueprint.route('download_config/<id>',methods=['GET', 'POST'])
 @login_required
@@ -323,8 +346,9 @@ def download_config(id, book):
             
             status = {
                     "status": "Finished", 
-                    "download_url": download_url
-            } 
+                    "download_url": download_url,
+                    "download_id": datahash,
+            }
             with open(status_file, 'w') as f:
                 f.write(json.dumps(status));
         

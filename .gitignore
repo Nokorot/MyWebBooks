@@ -19,3 +19,4 @@ venv
 .users
 .env 
 tests
+test.py

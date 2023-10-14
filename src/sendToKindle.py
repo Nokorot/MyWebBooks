@@ -60,7 +60,7 @@ def usage(prg):
     print("Send a file to my kinlde using email!")
 
 
-if__name__ == '__main__':
+if __name__ == '__main__':
     if (sys.argv[1] == '--help'):
         usage(sys.argv[0])
         sys.exit(0)
