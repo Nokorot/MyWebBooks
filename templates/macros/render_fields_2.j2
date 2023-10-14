@@ -1,0 +1,39 @@
+{% macro render_fields(data) %}
+  {% for key, entry in data.items() -%}
+    {% if entry.data %}
+      <div class="form-fields-group">
+        <label for="{{ key }}">{{ entry.label }}:</label>
+        {{ render_fields(entry.data) }}
+      </div>
+    {% else %}
+      <tr class="form-row">
+        <td>
+          <label class="label " for="{{ key }}">{{ entry.label }}:</label>
+        </td>
+        <td>
+          {% if not entry.type or entry.type == "str"  %}
+        <input type="{{ entry.field_type | default('value') }}" {% if entry.hidden %} hidden="true" {% endif %} id="{{ key }}" name="{{ key }}" value="{{ entry.value | default('') }}"
+            {% if entry.use_default %} disabled {% endif %}
+        >
+          {% elif entry.type == "bool" %}
+        <label class="switch">
+        <input type="hidden" id="{{ key }}" name="{{ key }}" value='0'>
+        <input type="checkbox" id="{{ key }}" name="{{ key }}" value='1' {% if entry.value %} checked {% endif %}>
+        <span class="slider round"></span>
+        </label>
+          {% else %}
+                <!-- Unknown form value type -->
+          {% endif %}
+        </td>
+        {# <td>
+            <button id="get_default_book">getDefault</button>
+        </td>
+        <td>
+          <input type="hidden"   id=""            name="use_default_{{ key }}" value='0'>
+          <input type="checkbox" id="use_default" name="use_default_{{ key }}" value='1' 
+                    {% if entry.use_default %} checked {% endif %}>
+        </td> #}
+      </tr>
+    {% endif %}
+  {%- endfor %}
+{% endmacro %}

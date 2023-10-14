@@ -1,47 +1,30 @@
-{% extends 'header.html' %}
+{% extends 'data_form.html' %}
 
-{% block head %} 
-<title>Edit Data</title>
-{% endblock %} 
+{% import 'macros/render_fields_2.j2' as macros %}
 
-{% block body %}
-<h1>Edit Data</h1>
+{% block form_body %}
 
+<table class="form-table">
+  <colgroup>
+   <col span="1" style="width: 20%;">
+   <col span="1" style="width: 70%;">
+   <col span="1" style="width: 10%;">
+  </colgroup>
 
-<div class="container">
-  <a href="{{url_for('books.list_books')}}" class="button back-button fa fa-arrow-left"> BACK</a>
+  <tbody>
+ {{ macros.render_fields(DATA) }}
+  </tbody>
 
-  {% import 'macros/render_fields.j2' as macros %}
-  <form action="{{ url_for('books.edit_data', id=id) }}" method="POST" onsubmit="submitForm(event)">
-    {{ macros.render_fields(data) }}
+</table>
 
-    <button class="button" type="submit">Save</button>
-  </form>
-
-<!-- Import and Export options -->
-{% include 'form_import_export.html' %}
-
-</div>
 
 <script>
-function submitForm(event) {
-    event.preventDefault(); // Prevent the default form submission behavior
-
-    var formData = new FormData(event.target);
-
-    // Create a new AJAX request
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', "{{ url_for('books.edit_data', id=id) }}", true);
-
-    // Handle the AJAX response
-    xhr.onload = function () {
-        if (xhr.status === 200) {
-            alert('Form submitted successfully');
-        } else {
-            alert('Form submission failed');
-        }
-    };
-    xhr.send(formData);
-}
+   
+document.querySelectorAll('#use_default').forEach((e) => {
+    e.addEventListener('click', () => {
+        console.log(e.name);
+    });
+});
 </script>
-{% endblock %}
+
+{% endblock %} 

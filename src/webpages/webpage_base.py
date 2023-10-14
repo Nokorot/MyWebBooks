@@ -4,6 +4,14 @@ import src.download_manager as dm
 import re
 
 class WebpageManager_Base():
+    config_enrtires = {
+        "title": {'label': "Title"},
+        "author": {'label': "author"},
+        "language": {'label': "Language"},
+        "cover_image": {'label': "Cover Image URL"},
+        "include_images"  : {'label': 'Include Images', 'type': 'bool' },
+    }
+
     download_config_enrtires = {
         "title": {'label': "Title"},
         "author": {'label': "author"},
@@ -42,6 +50,20 @@ class WebpageManager_Base():
             traceback.print_exc()
             return None
         return None
+
+    def get_config_entries(self):
+        entries = {}
+
+        for key, entry in self.config_enrtires.items():
+            default = getattr(self, 'get_default_book_%s' % key)()
+            mongo_entry = self.book.get('key', {'value': default, 'use_default': False})
+            if type(mongo_entry) != dict:
+                mongo_entry = {'value': mongo_entry, 'use_default': False}
+
+            entries[key] = { **entry, **mongo_entry, 'default': default };
+        return entries 
+
+
 
     # This function is meant to retrieve information like title, author and chapteres available from the books coverpage, that is the 'fiction page' in the case of royalroad
     def get_default_download_config_data(self):
