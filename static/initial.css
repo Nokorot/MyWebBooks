@@ -21,18 +21,17 @@
     text-decoration: none;
     border-radius: 8px;
 }
-.delete-button {
+
+.delete-button, .download-button {
     background-color: #D7BBF5;
     color: white;
     position: relative;
     margin-right: 10px;
-
-    
-    
 }
-.delete-button:hover {
+.delete-button:hover, .download-button:hover {
     background-color: #D7BBF5;
 }
+
 .logout-button{
     background-color: #f35e28;
     color: white;

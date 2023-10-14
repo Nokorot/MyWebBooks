@@ -18,11 +18,16 @@ class RoyalRoadWM(WebpageManager_Base):
     def __init__(self,id,book):
         WebpageManager_Base.__init__(self, id, book)
 
+    @classmethod
+    def new_book_data(cls, entry_point, match):
+        fiction_page_url = cls.base_url + '/fiction/' + match.group('id')
+        return { 'fiction_page': fiction_page_url };
+
     def get_fiction_page_bs(self):
         if hasattr(self, 'fiction_page_bs'):
             return self.fiction_page_bs
 
-        fiction_page_url = self.book.get('entry_point')
+        fiction_page_url = self.book.get('fiction_page') or self.book.get('entry_point')
         self.fiction_page_bs = dm.get_html(fiction_page_url, ignore_cache=True)
         return self.fiction_page_bs
 
@@ -47,8 +52,11 @@ class RoyalRoadWM(WebpageManager_Base):
 
     def get_book_chapters_list(self):
         chapters_table = self.get_fiction_page_bs().select('table#chapters')
+        if len(chapters_table) < 1:
+            return []
 
         first_column_data = []
+
         for row in chapters_table[0].find_all('tr'):
             # Find the first link in each row
             link = row.find('a')
@@ -66,8 +74,22 @@ class RoyalRoadWM(WebpageManager_Base):
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
+            content = chapter_page_bs.select('div.chapter-inner')[0]
+
+            for img in content.select('img'):
+                if config_data.get('include_images', False):
+                    epub_image_path = self.include_image(img.get('src'))
+                    # TODO: Should down-scale imeages, to a more appropriate resolution
+                    # imgobj = self.book.add_image(img.get('src'))
+                    # imgobj.add_reference(self)
+                    
+                    print(epub_image_path)
+                    print(img)
+                    img['src'] = epub_image_path
+                else:
+                    img.drop_tree()
+
             # TODO: This needs some work! For example, there is no images and no tables
-            content = str(chapter_page_bs.select('div.chapter-inner')[0])
             self.add_chapter(title, content)
 
             status = {

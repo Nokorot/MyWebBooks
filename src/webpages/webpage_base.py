@@ -20,6 +20,7 @@ class WebpageManager_Base():
     def __init__(self, id, book):
         self.id = id
         self.book = book;
+        self.images = {}
 
     @classmethod
     def match_url(cls, url):
@@ -32,9 +33,14 @@ class WebpageManager_Base():
         value = self.book.get(key)
         if not value is None:
             return value
-        default_method = getattr(self, 'get_default_book_%s' % key)
-        if not default_method is None:
-            return default_method()
+        try:
+            default_method = getattr(self, 'get_default_book_%s' % key)
+            if not default_method is None:
+                return default_method()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return None
         return None
 
     # This function is meant to retrieve information like title, author and chapteres available from the books coverpage, that is the 'fiction page' in the case of royalroad
@@ -95,11 +101,27 @@ class WebpageManager_Base():
 
         self.chapter_count = 0;
 
+    def include_image(self, img_url):
+        if self.images.get(img_url) is None:
+            image_count = len(self.images.keys())
+            epub_image_path = 'images/image_%u.jpg' % image_count
+    
+            data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
+            img = epub.EpubImage(
+                    uid         = 'image_%u' % (image_count),
+                    file_name   = epub_image_path,
+                    media_type  = "image/jpg",
+                    content     = data)
+            self.ebook.add_item(img)
+            self.images[img_url] = (epub_image_path, img)
+            return epub_image_path
+        return self.images[img_url][0]
+
     def add_chapter(self, title, contnet): # add_images_in_content=True)
         self.chapter_count += 1;
         chapter = epub.EpubHtml(title = title,
                     file_name = f'chapter_{self.chapter_count}.xhtml')
-        chapter.set_content(contnet)
+        chapter.set_content(str(contnet))
         self.ebook.add_item(chapter)
         self.ebook.toc.append(chapter)
         self.ebook.spine.append(chapter)

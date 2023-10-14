@@ -83,6 +83,9 @@ def reset_password():
     }
     return render_template("forms/reset_password.html", **kwargs)
 
+def get_user_name():
+    return g.user['userinfo']['name']
+
 def get_auth0_info():
     get_token = GetToken(os.environ.get('AUTH0_DOMAIN'), os.environ.get('MGMT_API_CLIENT_ID'), client_secret = os.environ.get('MGMT_API_SECRET'))
     token = get_token.client_credentials('https://{}/api/v2/'.format(os.environ.get('AUTH0_DOMAIN')))

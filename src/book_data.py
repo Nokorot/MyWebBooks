@@ -3,6 +3,10 @@ from bson.objectid import ObjectId
 import src.mongodb_api_1 as mongodb_api # import *
 import functools
 
+from src.webpages import get_wm_class, match_url
+
+from src.user_data import get_user_name
+
 def load_bookdata(id_name='id', book_data_name='book'):
     def decorator(func):
         @functools.wraps(func)
@@ -16,6 +20,9 @@ def load_bookdata(id_name='id', book_data_name='book'):
         return wrapped_func
     return decorator
 
+def get_user_books():
+    for book in mongodb_api.find('rr', 'books', {'owner': get_user_name()}):
+        yield BookData(book['_id'], book)
     
 class BookData():
     def __init__(self, id, mongod_data=None):
@@ -28,10 +35,12 @@ class BookData():
         #   It is used when we loop through the entries of find in list_books 
         self.dirty = False
 
+
+
     def close(self):
         if self.dirty:
             obj_id = ObjectId(self.id)
-            mongodb_api.updateOne('rr','books', {'_id': obj_id}, book_form_template)
+            mongodb_api.updateOne('rr','books', {'_id': obj_id}, self.mongod_data)
 
     def get(self, key, default=None):
         return self.mongod_data.get(key, default)
@@ -43,18 +52,19 @@ class BookData():
         self.mongod_data[key] = value
 
     def delete(self):
-        mongodb_api.deleteOne('rr', 'books', {"_id": id})
+        obj_id = ObjectId(self.id)
+        mongodb_api.deleteOne('rr', 'books', {"_id": obj_id})
 
     def get_wm_class(self):
         wm_class_name = self.get('wm_class_name')
         if not wm_class_name is None:
-            from src.webpages import get_wm_class
             return get_wm_class(wm_class_name)
         entry_point = self.get('entry_point')
         if entry_point is None:
             return None 
-        from src.webpages import match_url
-        return match_url(entry_point)
+        wm_class, match = match_url(entry_point)
+        self.set('wm_class_name', wm_class.__name__)
+        return wm_class
 
     def get_wm(self):
         wm_class = self.get_wm_class()
@@ -63,7 +73,7 @@ class BookData():
         return wm_class(self.id, self)
 
     def is_owner(self, user_name):
-        return book.get('owner') == user_name 
+        return self.mongod_data.get('owner') == user_name 
 
     def __getitem__(self, key):
         return self.get(key)
