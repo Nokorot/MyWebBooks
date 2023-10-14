@@ -18,11 +18,16 @@ class RoyalRoadWM(WebpageManager_Base):
     def __init__(self,id,book):
         WebpageManager_Base.__init__(self, id, book)
 
+    @classmethod
+    def new_book_data(cls, entry_point, match):
+        fiction_page_url = cls.base_url + '/fiction/' + match.group('id')
+        return { 'fiction_page': fiction_page_url };
+
     def get_fiction_page_bs(self):
         if hasattr(self, 'fiction_page_bs'):
             return self.fiction_page_bs
 
-        fiction_page_url = self.book.get('entry_point')
+        fiction_page_url = self.book.get('fiction_page') or self.book.get('entry_point')
         self.fiction_page_bs = dm.get_html(fiction_page_url, ignore_cache=True)
         return self.fiction_page_bs
 
@@ -47,8 +52,11 @@ class RoyalRoadWM(WebpageManager_Base):
 
     def get_book_chapters_list(self):
         chapters_table = self.get_fiction_page_bs().select('table#chapters')
+        if len(chapters_table) < 1:
+            return []
 
         first_column_data = []
+
         for row in chapters_table[0].find_all('tr'):
             # Find the first link in each row
             link = row.find('a')

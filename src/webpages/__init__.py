@@ -4,7 +4,7 @@ def match_url(url):
     for wm_class in _ALL_WM_CLASSES:
         match = wm_class.match_url(url)
         if not match is None:
-            return wm_class# ,  match
+            return wm_class,  match
 
 def get_wm_class(wm_class_name):
     # FIX: This is not relative

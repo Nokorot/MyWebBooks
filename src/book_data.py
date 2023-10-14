@@ -5,6 +5,8 @@ import functools
 
 from src.webpages import get_wm_class, match_url
 
+from src.user_data import get_user_name
+
 def load_bookdata(id_name='id', book_data_name='book'):
     def decorator(func):
         @functools.wraps(func)
@@ -18,6 +20,9 @@ def load_bookdata(id_name='id', book_data_name='book'):
         return wrapped_func
     return decorator
 
+def get_user_books():
+    for book in mongodb_api.find('rr', 'books', {'owner': get_user_name()}):
+        yield BookData(book['_id'], book)
     
 class BookData():
     def __init__(self, id, mongod_data=None):
@@ -29,6 +34,8 @@ class BookData():
         # NOTE: We are assuming mongod_data agrees with the one on mongodb.
         #   It is used when we loop through the entries of find in list_books 
         self.dirty = False
+
+
 
     def close(self):
         if self.dirty:
@@ -45,7 +52,8 @@ class BookData():
         self.mongod_data[key] = value
 
     def delete(self):
-        mongodb_api.deleteOne('rr', 'books', {"_id": id})
+        obj_id = ObjectId(self.id)
+        mongodb_api.deleteOne('rr', 'books', {"_id": obj_id})
 
     def get_wm_class(self):
         wm_class_name = self.get('wm_class_name')
@@ -54,7 +62,7 @@ class BookData():
         entry_point = self.get('entry_point')
         if entry_point is None:
             return None 
-        wm_class = match_url(entry_point)
+        wm_class, match = match_url(entry_point)
         self.set('wm_class_name', wm_class.__name__)
         return wm_class
 

@@ -33,9 +33,14 @@ class WebpageManager_Base():
         value = self.book.get(key)
         if not value is None:
             return value
-        default_method = getattr(self, 'get_default_book_%s' % key)
-        if not default_method is None:
-            return default_method()
+        try:
+            default_method = getattr(self, 'get_default_book_%s' % key)
+            if not default_method is None:
+                return default_method()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return None
         return None
 
     # This function is meant to retrieve information like title, author and chapteres available from the books coverpage, that is the 'fiction page' in the case of royalroad

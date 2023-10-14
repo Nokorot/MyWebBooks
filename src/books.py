@@ -23,14 +23,14 @@ import json
 def new_book():
     if request.method == 'POST':
         entry_point = request.form.get('entry_point')
-        print(request.form)
+        # print(request.form)
         
         if entry_point is None:
             return redirect(url_for('home'))
     
 
         from src.webpages import match_url
-        wm_class = match_url(entry_point)
+        wm_class, match = match_url(entry_point)
 
         if wm_class is None:
             # TODO: HERE we can ask the user whether they want to make a custom web-crawler
@@ -39,12 +39,14 @@ def new_book():
             return redirect(url_for('home'))
 
         # wm = wm_class.new_book(entry_point)
+        book_data_entries = wm_class.new_book_data( entry_point, match )
+         # {'fiction_page': url}
 
         mongodb_api.insertOne('rr', 'books', {
             'owner' : g.user['userinfo']['name'],
             'wm_class_name': wm_class.__name__,
-            'entry_point' : entry_point,
-
+            **book_data_entries,
+            # 'entry_point' : entry_point,
             # wm.data_entries()
             })
 
@@ -54,7 +56,7 @@ def new_book():
     data = {
         "entry_point": {
             'label': "Starting URL",
-            'value': "royalroad.com" },
+            'value': "" },
     }
     kwargs = {
         "TITLE": "New Book",
@@ -220,25 +222,12 @@ def book_config():
 def list_books():
     books_list = []
 
+    from src.book_data import get_user_books
     # Prepare the data list to pass to the template
-    for book in mongodb_api.find('rr', 'books', {'owner': g.user['userinfo']['name']}):
-        wm_class_name = book.get('wm_class_name')
-        if not wm_class_name is None:
-            from src.webpages import get_wm_class
-            wm_class = get_wm_class(wm_class_name)
-        else:
-            entry_point = book.get('entry_point')
-            if entry_point is None:
-                continue
-            from src.webpages import match_url
-            wm_class = match_url(entry_point)
-
-            # TODO: Update mongodb entry
-        if wm_class is None:
-            # This should not happen
+    for book in get_user_books():
+        wm = book.get_wm()
+        if wm is None:
             continue
-
-        wm = wm_class(book['_id'], book)
 
         books_list.append({
             '_id':     wm.id,

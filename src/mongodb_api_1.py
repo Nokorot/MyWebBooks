@@ -37,5 +37,6 @@ def updateOne(database: str, collection: str, query: dict, update: dict, **kwarg
 
 def deleteOne(database: str, collection: str, query: dict):
     coll = client[database][collection]
+    print(query)
     coll.delete_one(query)
 
