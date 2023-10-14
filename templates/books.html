@@ -19,8 +19,7 @@
         {% for data in data_list %}
         <div class="list-item" style="display:inline-block;">
               <div class="center">
-              <a href="{{ url_for('books.edit_book', id=data['_id']) }}">
-                <img class="center book-img" src="{{data['img_url']}}" alt="{{data['title'] | default('no title')}}"></a>
+                <img class="center book-img" src="{{data['img_url']}}" alt="{{data['title'] | default('no title')}}">
               </div>
               <div style="text-align: center; padding: 15px 0px 5px 0px;">
               <!--  <input type="text" name = "del" hidden value="{{ data['_id'] }}"> -->
