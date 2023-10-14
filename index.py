@@ -16,15 +16,6 @@ app.secret_key = os.environ['APP_SECRET_KEY']
 if __name__ == "__main__":
     app.config['DEBUG'] = True 
 
-import requests, time
-def sendSelfRequest():
-    requests.get(url_for('test'))
-    time.sleep(600)
-
-import threading
-thread = threading.Thread(target=sendSelfRequest)
-thread.start()
-
 # Enable HTML minification
 app.config['MINIFY_HTML'] = not app.config['DEBUG']
 # Skip removing comments
@@ -37,6 +28,19 @@ if not os.path.exists('./status'):
     os.makedirs("./status")
 if not os.path.exists('./cache'):
     os.makedirs("./cache")
+
+import requests, time
+def sendSelfRequest(url):
+    while True:
+        time.sleep(1)
+        print("Hey")
+        requests.get(url)
+
+domain = os.environ['DOMAIN']
+
+import threading
+thread = threading.Thread(target=sendSelfRequest, args=(domain + "/test", ))
+thread.start()
 
 @app.route("/")
 def home():
@@ -75,5 +79,6 @@ for source_file, url_prefix in blueprints.items():
     app.register_blueprint(module.blueprint, url_prefix=url_prefix)
 
 if __name__ == '__main__':
+
     app.run(debug=True, port=os.getenv("PORT", default=5000))
 
