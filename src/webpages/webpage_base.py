@@ -31,6 +31,7 @@ class WebpageManager_Base():
 
     def get_book_data(self, key):
         # TODO: Might want a timeout on the value
+        #   And also a %customized flag.
         value = self.book.get(key)
         if not value is None:
             return value

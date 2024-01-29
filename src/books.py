@@ -267,9 +267,6 @@ def send_epub_file_to_kindle():
     download_id = request.json.get('download_id') 
     if download_id is None:
         return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
-
-    print("Heu")
-
     local_epub_filepath = 'out/{}.epub'.format(download_id)
     if (not os.path.exists(local_epub_filepath)):
         return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
