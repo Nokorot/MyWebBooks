@@ -29,12 +29,13 @@ class WebpageManager_Base():
         print(cls.url_pattern, url)
         return re.match(cls.url_pattern, url)
 
-    def get_book_data(self, key):
+    def get_book_data(self, key, force_default=False): # Note: default might be misleading
         # TODO: Might want a timeout on the value
         #   And also a %customized flag.
-        value = self.book.get(key)
-        if not value is None:
-            return value
+        if not force_default:
+            value = self.book.get(key)
+            if not value is None:
+                return value
         try:
             default_method = getattr(self, 'get_default_book_%s' % key)
             if not default_method is None:
@@ -53,7 +54,8 @@ class WebpageManager_Base():
         # book_data = webpage_manager.get_book_data(book)
 
         for key, value in self.download_config_enrtires.items():
-            data[key] = { **value, 'value': getattr(self, 'get_default_book_%s' % key)() };
+            ## Only if value is not %customized, or otherwise marked as do not update
+            data[key] = { **value, 'value': self.get_book_data(key, force_default=True) };
         return data
 
     def genereate_download_config_hash(self, download_config_data):
