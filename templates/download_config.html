@@ -30,35 +30,12 @@
     <td><a id="downloadButton" class="button delete-button fa-solid fa-download" href="#">Download</a></td>
     <td><a id="sendToKindleButton" class="button delete-button fa-solid" href="#">SendToKindle</a></td>
 </tbody>
-{#
-<button class="button delete-button fa-solid fa-download" name="download" value="Download" type="submit">Download</button>
-<button class="button delete-button fa-solid" name="sendToKindle" value="SendToKindle"  type="submit">SendToKindle</button> #}
-{# <button class="button" type="submit">Download</button> #}
 </table>
 
-<div class="hidden collapsible">
+<div id="collapsible-advanced" class="collapsible hidden">
 <h2 style="text-align: center" class="collapsbtn">Advanced</h2> 
 
-{#
-<table id="rangeSelectTable">
-    <tbody><tr id="rangeStartChapterRow">
-        <td>First Chapter</td>
-        <td><select id="selectRangeStartChapter"></select></td>
-        <td><input id="showChapterUrlsCheckbox" type="checkbox" name="showChapterUrlsCheckbox" value="false"></td>
-        <td>Show URLs of Chapters</td>
-    </tr>
-    <tr id="rangeEndChapterRow">
-        <td>Last Chapter</td>
-        <td><select id="selectRangeEndChapter"></select></td>
-    </tr>
-    <tr id="rangeChapterCountRow">
-        <td>Chapters Count:</td>
-        <td><span id="spanChapterCount">206</span></td>
-    </tr>
-</tbody></table>
-#}
-
-<div class="collapsible collapsible-content">
+<div id="collapsible-chapters" class="collapsible collapsible-content">
     
 <h3 style="text-align: center"  class="collapsbtn">Chapters</h3> 
 <div class="form-table collapsible-content">
@@ -72,7 +49,7 @@
     <td colspan=2> 
     </td>
 </tr>
-  {% for idx, (text, href) in CHAPTERS -%}
+  {% for idx, (text, href) in CHAPTERS -%} {# Should construct this list in js. #}
     <tr class="form-row ">
       <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked> </td>
       <td> <input type="value"  id="{{ idx }}_text" name="chapter-text-{{ idx }}"value="{{ text }}"> </td>

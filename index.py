@@ -79,6 +79,5 @@ for source_file, url_prefix in blueprints.items():
     app.register_blueprint(module.blueprint, url_prefix=url_prefix)
 
 if __name__ == '__main__':
-
     app.run(debug=True, port=os.getenv("PORT", default=5000))
 

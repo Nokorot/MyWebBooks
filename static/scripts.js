@@ -5,7 +5,6 @@ function toggleDarkMode() {
     localStorage.setItem("darkModeEnabled", isDarkMode);
 }
 
-
 document.addEventListener("DOMContentLoaded", function () {
     const dropbtns = document.querySelectorAll(".dropbtn");
     dropbtns.forEach(function (element) {
@@ -17,7 +16,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const collapsbtns = document.querySelectorAll(".collapsbtn");
     collapsbtns.forEach(function (element) {
         element.addEventListener("click", function () {
-            element.closest('.collapsible').classList.toggle("hidden");
+            var collapsible = element.closest('.collapsible')
+            collapsible.classList.toggle("hidden");
+
+            var isHidden = collapsible.classList.contains("hidden");
+            localStorage.setItem(collapsible.id + "-state", isHidden);
+            console.log("SET", collapsible.id + "-state", isHidden);
         });
     });
 });
