@@ -31,9 +31,9 @@ if not os.path.exists('./cache'):
 
 import requests, time
 def sendSelfRequest(url):
+    print("SELF URL %s" % url)
     while True:
-        time.sleep(1)
-        print("Hey")
+        time.sleep(60)
         requests.get(url)
 
 domain = os.environ['DOMAIN']
