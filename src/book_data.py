@@ -22,7 +22,8 @@ def load_bookdata(id_name='id', book_data_name='book'):
 
 def get_user_books():
     for book in mongodb_api.find('rr', 'books', {'owner': get_user_name()}):
-        yield BookData(book['_id'], book)
+        with BookData(book['_id'], book) as bd:
+            yield bd
     
 class BookData():
     def __init__(self, id, mongod_data=None):
@@ -34,8 +35,6 @@ class BookData():
         # NOTE: We are assuming mongod_data agrees with the one on mongodb.
         #   It is used when we loop through the entries of find in list_books 
         self.dirty = False
-
-
 
     def close(self):
         if self.dirty:
