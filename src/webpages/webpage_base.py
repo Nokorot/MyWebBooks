@@ -30,13 +30,16 @@ class WebpageManager_Base():
         return re.match(cls.url_pattern, url)
 
     def get_book_data(self, key):
+        # TODO: Might want a timeout on the value
         value = self.book.get(key)
         if not value is None:
             return value
         try:
             default_method = getattr(self, 'get_default_book_%s' % key)
             if not default_method is None:
-                return default_method()
+                value = default_method()
+                self.book.set(key, value)
+                return value
         except Exception as e:
             import traceback
             traceback.print_exc()

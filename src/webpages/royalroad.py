@@ -28,6 +28,7 @@ class RoyalRoadWM(WebpageManager_Base):
             return self.fiction_page_bs
 
         fiction_page_url = self.book.get('fiction_page') or self.book.get('entry_point')
+        # TODO: The cache should not be ignored but timed out
         self.fiction_page_bs = dm.get_html(fiction_page_url, ignore_cache=True)
         return self.fiction_page_bs
 
