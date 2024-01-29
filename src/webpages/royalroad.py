@@ -3,7 +3,7 @@ from .webpage_base import WebpageManager_Base
 import src.download_manager as dm
 
 from urllib.parse import urljoin
-import json
+import json, re
 
 # This file is intended to contain all the royalroad specific functionality
 class RoyalRoadWM(WebpageManager_Base):
@@ -76,13 +76,27 @@ class RoyalRoadWM(WebpageManager_Base):
 
             content = chapter_page_bs.select('div.chapter-inner')[0]
 
+            # Look for the style entry, which hides the "Stolen content" entry
+            style_tags = chapter_page_bs.head.find_all('style')
+
+            # Extract and analyze the content of each style tag
+            for style_tag in style_tags:
+                css_content = style_tag.get_text()
+                # Use regular expressions to find the class name with display: none;
+                match = re.search(r'\.(.*?)\s*{[^}]*display:\s*none;[^}]*}', css_content)
+                if match:
+                    hidden_class_name = match.group(1)
+                    hidden_elements = content.find_all(class_=hidden_class_name)
+                    for element in hidden_elements:
+                        element.extract()
+
             for img in content.select('img'):
                 if config_data.get('include_images', False):
                     epub_image_path = self.include_image(img.get('src'))
                     # TODO: Should down-scale imeages, to a more appropriate resolution
                     # imgobj = self.book.add_image(img.get('src'))
                     # imgobj.add_reference(self)
-                    
+
                     print(epub_image_path)
                     print(img)
                     img['src'] = epub_image_path
