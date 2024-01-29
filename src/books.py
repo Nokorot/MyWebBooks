@@ -388,6 +388,6 @@ def download_config(id, book):
         "DESCRIPTION": "",
         "SUBMIT": "Download",
         "DATA": data,
-        "CHAPTERS": list(enumerate(chapters)),
+        "CHAPTERS": list(enumerate(chapters))[::-1],
     }
     return render_template('download_config.html', **kwargs)
