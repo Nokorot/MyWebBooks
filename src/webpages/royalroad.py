@@ -2,6 +2,8 @@
 from .webpage_base import WebpageManager_Base
 import src.download_manager as dm
 
+from bs4 import BeautifulSoup
+
 from urllib.parse import urljoin
 import json, re
 
@@ -10,6 +12,8 @@ class RoyalRoadWM(WebpageManager_Base):
     download_config_enrtires =   {
         **WebpageManager_Base.download_config_enrtires,
         "include_authors_notes": {'label': 'Include Authors Notes', 'type': 'bool', 'value': False },
+        "include_chapter_titles": {'label': 'Include Chapter Titles', 'type': 'bool', 'value': True },
+        # "replace_hr_box": {'label': 'Replace the hr box' }, ## TODO: Description/tooltips
     }
 
     base_url = 'https://www.royalroad.com'
@@ -45,11 +49,21 @@ class RoyalRoadWM(WebpageManager_Base):
         cover_img_url = self.get_fiction_page_bs().select_one('img.thumbnail').get('src')
         return  urljoin(self.base_url, cover_img_url)
 
+
+    # TODO: These fixed default values should be defined in the dict above
     def get_default_book_include_images(self):
         return True
 
     def get_default_book_include_authors_notes(self):
         return False
+
+    # TODO This should be advanced
+    def get_default_book_include_chapter_titles(self):
+        return True
+
+    # TODO This should be advanced. This also needs the user to save it
+    # def get_default_book_replace_hr_box(self):
+    #     return ""
 
     def get_book_chapters_list(self):
         chapters_table = self.get_fiction_page_bs().select('table#chapters')
@@ -75,7 +89,16 @@ class RoyalRoadWM(WebpageManager_Base):
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
-            content = chapter_page_bs.select('div.chapter-inner')[0]
+            chapter_content = []
+            if config_data.get('include_chapter_titles', True):
+                chapter_content.append('<h1>%s</h1>' % title)
+
+            # if config_data.get('include_authors_notes', True):
+            #     # This is a por solution, since only the first is added and always at the top
+            #     note = chapter_page_bs.select('div.author-note-portle')[0]
+            #      content.append(note)
+
+            chapter_inner = chapter_page_bs.select('div.chapter-inner')[0]
 
             # Look for the style entry, which hides the "Stolen content" entry
             style_tags = chapter_page_bs.head.find_all('style')
@@ -87,31 +110,52 @@ class RoyalRoadWM(WebpageManager_Base):
                 match = re.search(r'\.(.*?)\s*{[^}]*display:\s*none;[^}]*}', css_content)
                 if match:
                     hidden_class_name = match.group(1)
-                    hidden_elements = content.find_all(class_=hidden_class_name)
+                    hidden_elements = chapter_inner.find_all(class_=hidden_class_name)
                     for element in hidden_elements:
                         element.extract()
 
-            for img in content.select('img'):
+            for img in chapter_inner.select('img'):
                 if config_data.get('include_images', False):
                     epub_image_path = self.include_image(img.get('src'))
                     # TODO: Should down-scale imeages, to a more appropriate resolution
                     # imgobj = self.book.add_image(img.get('src'))
                     # imgobj.add_reference(self)
 
-                    print(epub_image_path)
-                    print(img)
                     img['src'] = epub_image_path
                 else:
                     img.drop_tree()
 
-            # TODO: This needs some work! For example, there is no images and no tables
-            self.add_chapter(title, content)
+            # hr_url = config_data.get('replace_hr_box', "").strip()
+            # if hr_url is not "":
+            #     from bs4 import BeautifulSoup
+            #     from bs4.builder import _lxml
+
+            #     epub_image_path = self.include_image(hr_url)
+
+            #     # String of HTML code for the <img> tag
+
+            #     # NOTE: This could be user defined.
+            #     img_html_code = """<div align="center" style="text-align:center; margin:1em">
+            #                     <img src="{}" width="80%"/></div>""".format(epub_image_path)
+
+            #     for hr in chapter_inner.select('hr'):
+            #         # Create a new Tag object from the HTML code
+
+            #         soup = BeautifulSoup(img_html_code, 'html.parser')
+            #         img_tag = soup.find()
+            #         # Tag(_lxml, 'img', None, True, img_html_code, True, None)
+
+            #         hr.replace_with(img_tag)
+
+            # chapter_content.append(str(chapter_inner))
+
+            self.add_chapter(title, "".join(chapter_content))
 
             status = {
-                    "status": "Downloading", 
+                    "status": "Downloading",
                     "percentage": "%u%s" % ( 100*(index+1) // len(chapters), '%')
                     # "download_url": download_url
-            } 
+            }
             with open(status_file, 'w') as f:
                 f.write(json.dumps(status));
 
