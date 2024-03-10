@@ -147,7 +147,7 @@ class RoyalRoadWM(WebpageManager_Base):
 
             #         hr.replace_with(img_tag)
 
-            # chapter_content.append(str(chapter_inner))
+            chapter_content.append(str(chapter_inner))
 
             self.add_chapter(title, "".join(chapter_content))
 

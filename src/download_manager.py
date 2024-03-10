@@ -95,7 +95,7 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
     width, height = im.size
 
     im.thumbnail((max_width, max_height))
-    im.save(cache_filepath)
+    im.save(cache_filepath, format=im.format.upper())
     return read_valid_cache_file(cache_filepath)
 
 ##The Following is not really tested but it is way to complicated anyway
