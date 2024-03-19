@@ -13,7 +13,6 @@ class RoyalRoadWM(WebpageManager_Base):
         **WebpageManager_Base.download_config_enrtires,
         "include_authors_notes": {'label': 'Include Authors Notes', 'type': 'bool', 'value': False },
         "include_chapter_titles": {'label': 'Include Chapter Titles', 'type': 'bool', 'value': True },
-        # "replace_hr_box": {'label': 'Replace the hr box' }, ## TODO: Description/tooltips
     }
 
     base_url = 'https://www.royalroad.com'
@@ -60,10 +59,6 @@ class RoyalRoadWM(WebpageManager_Base):
     # TODO This should be advanced
     def get_default_book_include_chapter_titles(self):
         return True
-
-    # TODO This should be advanced. This also needs the user to save it
-    # def get_default_book_replace_hr_box(self):
-    #     return ""
 
     def get_book_chapters_list(self):
         chapters_table = self.get_fiction_page_bs().select('table#chapters')
