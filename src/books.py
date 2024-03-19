@@ -163,56 +163,6 @@ def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
     print(result)
     return result
 
-@blueprint.route("/configure-book",methods=['GET', 'POST'])
-def book_config():
-    data = {
-    "TITLE"      : {'label': 'Title',          },
-    "AUTHOR"     : {'label': 'Author',         },
-    "COVER"      : {'label': 'Cover',          },
-    "ENTRY"      : {'label': 'First Chapeter', },
-    "INCLUDE_IMG"  : {'label': 'Include Images', 'type': 'bool', 'value': False },
-    #  "OUTFILE"    : {'label': 'Epub File Name', },
-    }
-
-    if request.method == 'POST':
-        request_data = request.form
-
-        fiction_page_url = request_data.get("fiction_page_url");
-        if not fiction_page_url:
-            return "ERROR: No 'fiction_page_url' was privided. Go to <a href=\"" +  \
-                url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
-
-        from urllib.parse import urlparse
-
-        parsed_url = urlparse(fiction_page_url)
-        path_parts = parsed_url.path.split("/")
-        fiction_id = path_parts[2] if len(path_parts) > 2 else None
-
-        if not fiction_id:
-            return "ERROR: Failed to parse 'fiction_page_url'. Go to <a href=\"" +  \
-                url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
-
-        id = fiction_id;
-
-        if fiction_page_url:
-            request_data = royalroad_cofig_from_fiction_page(fiction_page_url)
-
-            for key in data.keys():
-                value = request_data.get(key)
-            if value:
-                data[key]['value'] = value
-
-    kwargs = {
-    "TITLE": "RoyalRoad Book Configuration",
-    "DERCRIPTION": "Please check that the following configuration is correct (Note that after clicking, you just have to wait, sorry for the lack of visual indication)",
-    "SUBMIT": "Download",
-    "DATA": data,
-    "NO_REDIRECT_ONSUBMIT": False,
-    # "ACTION": url_for("royalroad_dl.book_config"),
-    "ACTION": url_for("royalroad_dl.download_book", id=id),
-    }
-    return render_template('data_form.html', **kwargs)
-
 @blueprint.route('/list_books',methods = ['GET'])
 @login_required
 def list_books():
@@ -316,17 +266,11 @@ def download_config(id, book):
     wm = book.get_wm()
 
     if request.method == 'POST':
-        # local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
-
         config_data = wm.parse_download_config_data_form(request.form)
         datahash = wm.genereate_download_config_hash(config_data)
         # TODO: Store the config_data along with the epub.
 
         local_epub_filepath = 'out/{}.epub'.format(datahash)
-
-        # if now already in server download it
-        # if(not os.path.exists(local_epub_filepath)):
-
 
         download_url = url_for("books.download_epub_file", download_id=datahash)
         def download_the_book():
