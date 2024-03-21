@@ -86,7 +86,7 @@ function selectNew() {
     urlTable = document.getElementById("chapterUrlsTable");
     checkboxes = urlTable.querySelectorAll('input[type=checkbox]');
     for(var i=0; i < checkboxes.length; i++){
-        checkboxes[i].checked = checkboxes[i].getAttribute("is_new") === true;
+        checkboxes[i].checked = checkboxes[i].getAttribute("is_new");
     }
 }
 
