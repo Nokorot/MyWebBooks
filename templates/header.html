@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset = "UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="icon" href="{{url_for('static', filename='imgs/logo.png')}}">
 
@@ -24,9 +25,11 @@
     <div class="header">
 
     <a href="{{ url_for('home') }}">
-    <img class="header-logo" src="{{url_for('static', filename='imgs/logo_256.png')}}" alt="LOGO">
+    <img class="header-logo"
+         src="{{url_for('static', filename='imgs/logo_256.png')}}"
+         alt="LOGO">
     </a>
-
+    <h1>{%block title%}THE TITLE{%endblock title%}</h1>
     <!-- logout button -->
     <div class="header-menu">
     <label class="toggle-dark-mode switch">

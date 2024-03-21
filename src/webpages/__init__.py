@@ -9,4 +9,7 @@ def match_url(url):
 def get_wm_class(wm_class_name):
     # FIX: This is not relative
     mod = __import__('src.webpages._webpages', fromlist=[wm_class_name])
-    return getattr(mod, wm_class_name)
+    try:
+        return getattr(mod, wm_class_name)
+    except AttributeError:
+        return None
