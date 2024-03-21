@@ -3,6 +3,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0px;
     background-color: #f1f1f1;
+    overflow: auto;
 }
 
 form{
@@ -19,19 +20,19 @@ h1 {
 
 .container-wrapper { 
     text-align: center;
-    width: 70%;
-    min-width: min(925px, 100%);
+    width:90%;
+
 }
 
 .container { 
     text-align: center;
-    display:table;
+    display: flex;
+    flex: auto;
+    flex-wrap:wrap;
+    justify-content: start;
   /* text-align: -webkit-center; */
-    text-align: center;
     border: 1px solid #ccc;
-    padding: 20px;
-    margin-bottom: 20px;
-    vertical-align: middle;
+    padding: 10px;
 }
 
 .label {
@@ -50,6 +51,7 @@ h1 {
     padding: 10px 15px;
     border: none;
     cursor: pointer;
+    margin: 4px;
 }
 
 .button:hover {
@@ -62,19 +64,63 @@ h1 {
   /* Set border, padding, margin, and other styles */
   border: 1px solid #ccc;
   padding: 10px;
-  margin-bottom: 10px;
-  vertical-align: middle;
-  margin:auto;
-  display:table-cell;
-
+  margin:10px;
+  flex: auto;
   /* Add additional styles as needed */
 }
 
 .header {
-  height: 90px;
-  background: #00C9FB;  
+  overflow:auto;
+  justify-content:space-around;
+  display:flex;
+  flex-wrap:wrap;
+  background: #00C9FB;
+  padding:10px;
 }
 
+.delete-button, .download-button {
+    background-color: #D7BBF5;
+    color: white;
+    position: relative;
+    padding:5px;
+}
+.delete-button:hover, .download-button:hover {
+    background-color: #D7BBF5;
+}
+.button{
+    padding: 15px 25px;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
+
+
+.logout-button{
+    background-color: #f35e28;
+    color: white;
+    position: relative;
+    /* left: 10px;
+    top: 10px; */
+}
+.logout-button:hover{
+    background-color: rgb(4, 32, 50);
+}
+.login-button{
+    background-color: #17f783;
+    color: white;
+
+    margin-top: 22px;
+}
+
+.login-button:hover{
+    background-color: rgb(239, 245, 249);
+}
+.back-button{
+    position:relative;
+    top:10px;
+    left:10px;
+    background-color:#17f783
+}
 .form-table {
     width: 100%;
 }
@@ -257,7 +303,7 @@ input:checked + .slider:before {
 }
 
 .header-title {
-    position: absolute;
+    position: relative;
     top: 20px;
     left: 50%;
     transform: translate(-50%, -50%);
