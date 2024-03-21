@@ -46,14 +46,15 @@
 <table id="chapterUrlsTable" class="form-table collapsible-content">
 <tbody>
 <tr>
-    <td colspan=2> 
+    <td colspan=3>
     </td>
 </tr>
-  {% for idx, (text, href) in CHAPTERS -%} {# Should construct this list in js. #}
+  {% for idx, (text, href, time) in CHAPTERS -%} {# Should construct this list in js. #}
     <tr class="form-row ">
       <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked> </td>
       <td> <input type="value"  id="{{ idx }}_text" name="chapter-text-{{ idx }}"value="{{ text }}"> </td>
       <td> <input hidden type="value"  id="{{ idx }}_url" name="chapter-url-{{ idx }}"  value="{{ href }}"> </td>
+        <td> <p> {{time}} </p></td>
     </tr>
   {%- endfor %}
   </div>

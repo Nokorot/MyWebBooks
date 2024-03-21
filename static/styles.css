@@ -336,8 +336,9 @@ img.user-icon {
 }
 
 .dropdown-content {
+  border-radius: 10px;
   position: absolute;
-  background-color: #f1f1f1;
+  background-color: #c94d6c;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;

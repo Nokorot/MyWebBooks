@@ -6,11 +6,11 @@ from bs4 import BeautifulSoup
 
 from urllib.parse import urljoin
 import json, re
-
+from datetime import datetime
 # This file is intended to contain all the royalroad specific functionality
 class RoyalRoadWM(WebpageManager_Base):
-    download_config_enrtires =   {
-        **WebpageManager_Base.download_config_enrtires,
+    download_config_entries =   {
+        **WebpageManager_Base.download_config_entries,
         "include_authors_notes": {'label': 'Include Authors Notes', 'type': 'bool', 'value': False },
         "include_chapter_titles": {'label': 'Include Chapter Titles', 'type': 'bool', 'value': True },
     }
@@ -65,16 +65,24 @@ class RoyalRoadWM(WebpageManager_Base):
         if len(chapters_table) < 1:
             return []
 
-        first_column_data = []
-
+        result = []
         for row in chapters_table[0].find_all('tr'):
             # Find the first link in each row
             link = row.find('a')
+            time = row.find('time')
+            dt = time.get('unixtime') if time else None
+            if dt:
+                print(time)
+                #dt = datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%fZ')
+                dt = datetime.fromtimestamp(int(dt))
+                dt = str(dt)
 
-            if link and 'href' in link.attrs:
-                first_column_data.append((link.get_text().strip(), link['href']))
-
-        return first_column_data
+            result.append((
+               link.get_text().strip() if link else None,
+               link['href'] if link else None,
+               dt if time else None
+            ))
+        return result
 
     def download_book_to_server(self, config_data, local_epub_filepath, status_file):
         self.init_epub(config_data)

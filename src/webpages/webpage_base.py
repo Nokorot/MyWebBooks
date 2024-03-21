@@ -4,7 +4,7 @@ import src.download_manager as dm
 import re
 
 class WebpageManager_Base():
-    download_config_enrtires = {
+    download_config_entries = {
         "title": {'label': "Title"},
         "author": {'label': "author"},
         "language": {'label': "Language"},
@@ -53,7 +53,7 @@ class WebpageManager_Base():
         data = {}
         # book_data = webpage_manager.get_book_data(book)
 
-        for key, value in self.download_config_enrtires.items():
+        for key, value in self.download_config_entries.items():
             ## Only if value is not %customized, or otherwise marked as do not update
             data[key] = { **value, 'value': self.get_book_data(key, force_default=True) };
         return data
@@ -67,10 +67,10 @@ class WebpageManager_Base():
 
     def parse_download_config_data_form(self, form_data):
         download_config_data = {}
-        for key in self.download_config_enrtires.keys():
+        for key in self.download_config_entries.keys():
             if not key in form_data:
                 download_config_data[key] = getattr(self, 'get_default_book_%s' % key)()
-            elif self.download_config_enrtires[key].get("type") == 'bool':
+            elif self.download_config_entries[key].get("type") == 'bool':
                 # This is a work around, since an unchecked checkbox is simply not included in the form_data
                 download_config_data[key] = '1' in form_data.getlist(key)
             else:
