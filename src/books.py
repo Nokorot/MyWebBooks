@@ -98,20 +98,6 @@ def edit_book(id, book):
         flash("data updated!")
         return 'Data updated successfully.'
 
-    # data = {
-    #     "title": {'label': "Title"},
-    #     "author": {'label': "author"},
-    #     "cover_image": {'label': "Cover Image URL"},
-    #     "entry_point": {'label': "Starting URL", 'value': "royalroad.com" },
-    #     "rss": {'label': "RSS URL", 'value': "" },
-    #     "section_css_selector": {'label': "Section CSS selector", 'value': "" },
-    #     "title_css_selector": {'label': "Title CSS selector", 'value': "" },
-    #     "paragraph_css_selector": {'label': "Paragraph CSS selector",'value': "" },
-    #     "next_chapter_css_selector": {'label': "Next Chapter Button CSS selector", 'value': "" }
-    # }
-    # for key, value in data.items():
-    #     data[key]["value"] = book[key]
-
     entries = wm.get_config_entries()
     from pprint import pprint
     pprint(entries)
@@ -339,6 +325,8 @@ def download_config(id, book):
             print("DEBUG: Already exists")
             # is_sent_to_kindle most be user spesific
             if do_send_to_kindle: # and not task.is_sent_to_kindle:
+                book.set("last_send_to_kindle", int(datetime.now().timestamp()))
+
                 send_file_to_kindle(task, user_kindle_address)
                 task.is_sent_to_kindle = True
 
@@ -352,6 +340,8 @@ def download_config(id, book):
 
             if do_send_to_kindle: #  and not task.is_sent_to_kindle:
                 was_sendt, error_msg = send_file_to_kindle(task, user_kindle_address)
+
+                book.set("last_send_to_kindle", int(datetime.now().timestamp()))
 
                 if was_sendt:
                     task.is_sent_to_kindle = True
@@ -374,5 +364,6 @@ def download_config(id, book):
         "SUBMIT": "Download",
         "DATA": data,
         "CHAPTERS": list(enumerate(chapters))[::-1],
+        "LAST_SEND_TO_KINDE": book.get("last_send_to_kindle", 0)
     }
     return render_template('download_config.html', **kwargs)

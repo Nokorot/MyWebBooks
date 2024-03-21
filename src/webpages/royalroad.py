@@ -70,12 +70,14 @@ class RoyalRoadWM(WebpageManager_Base):
             # Find the first link in each row
             link = row.find('a')
             time = row.find('time')
-            dt = time.get('unixtime') if time else None
+            if time is None or link is None:
+                continue
+
+            dt = time.get('unixtime')
+
             if dt:
-                print(time)
-                #dt = datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%fZ')
                 dt = datetime.fromtimestamp(int(dt))
-                dt = str(dt)
+                # dt = str(dt)
 
             result.append((
                link.get_text().strip() if link else None,

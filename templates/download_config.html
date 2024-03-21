@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block form_body %}
+
 <table class="form-table">
   <colgroup>
    <col span="1" style="width: 20%;">
@@ -33,14 +34,15 @@
 </table>
 
 <div id="collapsible-advanced" class="collapsible hidden">
-<h2 style="text-align: center" class="collapsbtn">Advanced</h2> 
+<h2 style="text-align: center" class="collapsbtn">Advanced</h2>
 
 <div id="collapsible-chapters" class="collapsible collapsible-content">
-    
-<h3 style="text-align: center"  class="collapsbtn">Chapters</h3> 
+
+<h3 style="text-align: center"  class="collapsbtn">Chapters</h3>
 <div class="form-table collapsible-content">
-  <button id="selectAllUrldButton" type="button" onclick="selectAllUrls(true)">Select All</button> 
-  <button id="unselectAllUrldButton"type="button" onclick="selectAllUrls(false)">Unselect All</button> 
+  <button id="selectAllUrldButton" type="button" onclick="selectAllUrls(true)">Select All</button>
+  <button id="unselectAllUrldButton"type="button" onclick="selectAllUrls(false)">Unselect All</button>
+  <button id="selectNewUrldButton"type="button" onclick="selectNew()">Select New</button>
 </div>
 
 <table id="chapterUrlsTable" class="form-table collapsible-content">
@@ -50,11 +52,16 @@
     </td>
 </tr>
   {% for idx, (text, href, time) in CHAPTERS -%} {# Should construct this list in js. #}
-    <tr class="form-row ">
-      <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked> </td>
+    <tr class="form-row">
+      <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked
+        {% if time.timestamp() > LAST_SEND_TO_KINDE   %} is_new=true {% endif %}> </td>
       <td> <input type="value"  id="{{ idx }}_text" name="chapter-text-{{ idx }}"value="{{ text }}"> </td>
       <td> <input hidden type="value"  id="{{ idx }}_url" name="chapter-url-{{ idx }}"  value="{{ href }}"> </td>
-        <td> <p> {{time}} </p></td>
+      <td> <p
+        {% if time.timestamp() > LAST_SEND_TO_KINDE   %}
+                   style="color:red"
+        {% endif %}> {{ time.__str__() }} </p>
+          <time unixtime={{ time.timestamp() }}></time></td>
     </tr>
   {%- endfor %}
   </div>
@@ -70,15 +77,19 @@
 function selectAllUrls(selection) {
     urlTable = document.getElementById("chapterUrlsTable");
     checkboxes = urlTable.querySelectorAll('input[type=checkbox]');
-    for (element in checkboxes) {
-        element.checked = true;
+    for(var i=0; i<checkboxes.length; i++){
+           checkboxes[i].checked = selection;
     }
-    for(var i=0; i<checkboxes.length; i++){  
-           checkboxes[i].checked = selection;  
-                } 
-    // querySelectorAll(".dropbtn")
-    
 }
+
+function selectNew() {
+    urlTable = document.getElementById("chapterUrlsTable");
+    checkboxes = urlTable.querySelectorAll('input[type=checkbox]');
+    for(var i=0; i < checkboxes.length; i++){
+        checkboxes[i].checked = checkboxes[i].getAttribute("is_new") === true;
+    }
+}
+
 
 let nIntervId;
 
@@ -87,14 +98,12 @@ function checkDownloadStatus(download_id, callback) {
     xhr.open('POST', "{{ url_for('books.download_status') }}", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-    // document.getElementById('status').innerHTML = download_id;
     xhr.onload = function () {
         if (xhr.status === 200) {
-            // document.getElementById('status').innerHTML = xhr.response;
             console.log("Status response: ");
             console.log(xhr.response);
             response = JSON.parse(xhr.response);
-    
+
             if (response['status'] === "Downloading") {
                 document.getElementById('status-bar').style.width = response['percentage'];
             } else {
@@ -114,13 +123,9 @@ function checkDownloadStatus(download_id, callback) {
     xhr.send(JSON.stringify({ "download_id": download_id}));
 }
 
-// let Downloading = True;
 function downloadBook(do_send_to_kindle, callback) {
-    // if (Downloading)
-    //     return;
-    // Downloading = True;
     var formData = new FormData(document.getElementById("form"));
-    
+
     formData.append('do_send_to_kindle', do_send_to_kindle);
 
     var xhr = new XMLHttpRequest();
@@ -160,11 +165,6 @@ document.getElementById("sendToKindleButton").addEventListener("click", () => {
             return;
         }
         console.log("Download Finished");
-
-        // var xhr = new XMLHttpRequest();
-        {# // xhr.open('POST', "{{ url_for('books.send_epub_file_to_kindle') }}", true); #}
-        // xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        // xhr.send(JSON.stringify({ "download_id": status['download_id']}));
     });
 });
 
