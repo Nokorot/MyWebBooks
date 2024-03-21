@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from ebooklib import epub
 
 import os
-import src.mongodb_api_1 as mongodb_api # import *
+import src.mongodb_api_1 as mongodb_api
 from src.login import login_required
 
 import src.user_data as user_data
@@ -25,7 +25,7 @@ def new_book():
         entry_point = request.form.get('entry_point')
         if entry_point is None:
             return redirect(url_for('home'))
-    
+
         from src.webpages import match_url
         wm_class, match = match_url(entry_point)
 
@@ -70,7 +70,7 @@ def edit_book(id, book):
     wm = book.get_wm()
 
     if request.method == 'POST':
-        # TODO: This is severely outdated, should use the wm_class object 
+        # TODO: This is severely outdated, should use the wm_class object
 
         # Update the JSON data with the form values
         import json
@@ -163,56 +163,6 @@ def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
     print(result)
     return result
 
-@blueprint.route("/configure-book",methods=['GET', 'POST'])
-def book_config():
-    data = {
-    "TITLE"      : {'label': 'Title',          },
-    "AUTHOR"     : {'label': 'Author',         },
-    "COVER"      : {'label': 'Cover',          },
-    "ENTRY"      : {'label': 'First Chapeter', },
-    "INCLUDE_IMG"  : {'label': 'Include Images', 'type': 'bool', 'value': False },
-    #  "OUTFILE"    : {'label': 'Epub File Name', },
-    }
-
-    if request.method == 'POST':
-        request_data = request.form
-
-        fiction_page_url = request_data.get("fiction_page_url");
-        if not fiction_page_url:
-            return "ERROR: No 'fiction_page_url' was privided. Go to <a href=\"" +  \
-                url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
-
-        from urllib.parse import urlparse
-
-        parsed_url = urlparse(fiction_page_url)
-        path_parts = parsed_url.path.split("/")
-        fiction_id = path_parts[2] if len(path_parts) > 2 else None
-
-        if not fiction_id:
-            return "ERROR: Failed to parse 'fiction_page_url'. Go to <a href=\"" +  \
-                url_for("royalroad_dl.head") +"\">royalroad-dl</a>"
-
-        id = fiction_id;
-
-        if fiction_page_url:
-            request_data = royalroad_cofig_from_fiction_page(fiction_page_url)
-
-            for key in data.keys():
-                value = request_data.get(key)
-            if value:
-                data[key]['value'] = value
-
-    kwargs = {
-    "TITLE": "RoyalRoad Book Configuration",
-    "DERCRIPTION": "Please check that the following configuration is correct (Note that after clicking, you just have to wait, sorry for the lack of visual indication)",
-    "SUBMIT": "Download",
-    "DATA": data,
-    "NO_REDIRECT_ONSUBMIT": False,
-    # "ACTION": url_for("royalroad_dl.book_config"),
-    "ACTION": url_for("royalroad_dl.download_book", id=id),
-    }
-    return render_template('data_form.html', **kwargs)
-
 @blueprint.route('/list_books',methods = ['GET'])
 @login_required
 def list_books():
@@ -244,70 +194,118 @@ def delete_book(id):
 @blueprint.route('download_status',methods=['POST'])
 # @login_required
 def download_status():
-    # download_id = request.form.get('download_id') \
-    #         or  request.args.get('download_id') \
-    #         or  request.json.get('download_id') 
-    download_id = request.json.get('download_id') 
-    
+    download_id = request.json.get('download_id')
+
     if download_id is None:
         return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
 
-    status_file = 'status/{}.json'.format(download_id)
-    if (not os.path.exists(status_file)):
-        return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'status_file does not exists'}"
- 
-    with open(status_file, 'r') as f:
-        return f.read()
+    task = DownloadTask.byID(download_id)
+    return task.status_msg()
 
-    print("Status request with id: " + str(download_id))
-    return "Status"
-
-@blueprint.route('send_epub_file_to_kindle',methods=['POST'])
-def send_epub_file_to_kindle():
-    download_id = request.json.get('download_id') 
-    if download_id is None:
-        return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
-    local_epub_filepath = 'out/{}.epub'.format(download_id)
-    if (not os.path.exists(local_epub_filepath)):
-        return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
-
-    download_config_file = 'out/config_{}.json'.format(download_id)
-    if (not os.path.exists(download_config_file)):
-        return "{'status': 'ERROR', 'error_code': 3, 'error_msg': 'download_config_file does not exists'}"
-
-    with open(download_config_file, 'r') as f:
-        config_data = json.load(f)
-
-
+def send_file_to_kindle(task, user_kindle_address=None):
     from .sendToKindle import sendToKindle
-    kindle_address = user_data.get_kindle_address()
-    if not kindle_address:
-        flash('The kindle email address was not set. Please enter and submit your kindle email address');
-        return "{'status': 'ERROR', 'error_code': 4, 'error_msg': 'The kindle_address was not set'}"
+    if user_kindle_address is None:
+        user_kindle_address = user_data.get_kindle_address()
+    if not user_kindle_address:
+        flash('The kindle email address was not set. Please enter and submit your kindle email address')
+        return False, {'status': 'ERROR', 'error_code': 4, 'error_msg': 'The kindle_address was not set'}
 
-    sendToKindle(file = local_epub_filepath,
-            target_filename="{}.epub".format(config_data.get('title')),
-            receiver = kindle_address);
-    flash('The email has been sent successfully')
-    return "{'status': 'Success'}"
+    # print("HEYY ", current_app)
+    # TODO:
+    # current_app is not defined in the task thread
+    # if current_app.config['DEBUG'] == True:
+    #     print("DEBUG: Skipping sending file to kindle in debug mode")
+    # else:
+    #     pass
+
+    if True:
+        title = task.config_data.get('title')
+        sendToKindle(file = task.local_epub_filepath,
+                target_filename="{}.epub".format(title),
+                receiver = user_kindle_address)
+
+    # NOTE: flash dose not work in task thread
+    # flash('The email has been sent successfully')
+
+    return True, None
+
+# UNUSED:
+# @blueprint.route('send_epub_file_to_kindle',methods=['POST'])
+# def send_epub_file_to_kindle():
+#     download_id = request.json.get('download_id')
+#     if download_id is None:
+#         return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
+#     local_epub_filepath = 'out/{}.epub'.format(download_id)
+#     if (not os.path.exists(local_epub_filepath)):
+#         return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
+#
+#     download_config_file = 'out/config_{}.json'.format(download_id)
+#     if (not os.path.exists(download_config_file)):
+#         return "{'status': 'ERROR', 'error_code': 3, 'error_msg': 'download_config_file does not exists'}"
+#
+#     with open(download_config_file, 'r') as f:
+#         config_data = json.load(f)
+#
+#     return send_file_to_kindle(local_epub_filepath, config_data);
 
 @blueprint.route('download_epub_file/<download_id>',methods=['GET'])
 def download_epub_file(download_id):
-    local_epub_filepath = 'out/{}.epub'.format(download_id)
-    if (not os.path.exists(local_epub_filepath)):
+    task = DownloadTask.byID(download_id)
+
+    if task.status != task.FINISHED:
+        return task.status_msg()
+
+    if (not os.path.exists(task.local_epub_filepath)):
         return "{'status': 'ERROR', 'error_code': 2, 'error_msg': 'epub_file does not exists'}"
 
-    download_config_file = 'out/config_{}.json'.format(download_id)
-    print(download_config_file)
-    if (not os.path.exists(download_config_file)):
-        return "{'status': 'ERROR', 'error_code': 3, 'error_msg': 'download_config_file does not exists'}"
+    return send_file(task.local_epub_filepath, as_attachment = True, \
+        download_name="%s.epub" % task.config_data.get('title'))
 
-    with open(download_config_file, 'r') as f:
-        config_data = json.load(f)
 
-    return send_file(local_epub_filepath, as_attachment = True, \
-        download_name="%s.epub" % config_data.get('title'))
+g_download_tasks = {}
+class DownloadTask():
+    FINISHED = "Finished"
+    DOWNLOADING = "Downloading"
 
+    def __init__(self, taskId):
+        self.id = taskId
+        self.is_sent_to_kindle = False
+        self.status = None
+
+        g_download_tasks[taskId] = self
+        # self.status_file = 'status/{}.json'.format(datahash)
+
+    @staticmethod
+    def byID(taskId):
+        global g_download_tasks
+        task = g_download_tasks.get(taskId)
+        if task is None:
+            task = DownloadTask(taskId)
+        return task
+
+    def _status_msg_response(task):
+        responce = {}
+        if task.status is not None:
+            responce["status"] = "Undefined"
+            return responce
+
+        responce["status"] = task.status
+        if task.status == task.FINISHED:
+            responce["download_url"]        = task.download_url
+            responce["download_id"]         = task.download_id
+        elif task.status == task.DOWNLOADING:
+            responce["percentage"] = "%u%s" % ( task.percentage or 0, '%')
+
+        return responce
+
+    def status_msg(self):
+        return json.dumps(self._status_msg_response())
+
+    def set(self, key, value):
+        self.status.set(key, value)
+
+    def get(self, key, default=None):
+        self.status.get(key, default)
 
 @blueprint.route('download_config/<id>',methods=['GET', 'POST'])
 @login_required
@@ -316,69 +314,56 @@ def download_config(id, book):
     wm = book.get_wm()
 
     if request.method == 'POST':
-        # local_ebook_filepath = 'out/{}.epub'.format(book.get('title'))
-
         config_data = wm.parse_download_config_data_form(request.form)
-        datahash = wm.genereate_download_config_hash(config_data)
-        # TODO: Store the config_data along with the epub.
+        datahash    = wm.genereate_download_config_hash(config_data)
+        do_send_to_kindle = request.form.get("do_send_to_kindle") == 'true'
 
-        local_epub_filepath = 'out/{}.epub'.format(datahash)
+        user_kindle_address = user_data.get_kindle_address()
 
-        # if now already in server download it
-        # if(not os.path.exists(local_epub_filepath)):
+        global g_download_tasks
+        print(g_download_tasks, datahash)
 
+        if not g_download_tasks.__contains__(datahash):
+            task = DownloadTask(datahash)
+            task.config_data = config_data
+            task.local_epub_filepath = 'out/{}.epub'.format(task.id)
+            task.download_url = url_for("books.download_epub_file", download_id=task.id)
+            if os.path.exists(task.local_epub_filepath):
+                task.status = task.FINISHED
+        else:
+            task = g_download_tasks.get(datahash)
+            if task.status == task.DOWNLOADING:
+                return task.status_msg()
 
-        download_url = url_for("books.download_epub_file", download_id=datahash)
+        if task.status == task.FINISHED:
+            print("DEBUG: Already exists")
+            # is_sent_to_kindle most be user spesific
+            if do_send_to_kindle: # and not task.is_sent_to_kindle:
+                send_file_to_kindle(task, user_kindle_address)
+                task.is_sent_to_kindle = True
+
+            return task.status_msg()
+
         def download_the_book():
-            status_file = 'status/{}.json'.format(datahash)
-            with open(status_file, 'w') as f:
-                f.write('{"status": "Downloading"}')
+            task.status = task.DOWNLOADING
+            task.percentage = 0
 
-            download_config_file = 'out/config_{}.json'.format(datahash)
-            with open(download_config_file, 'w') as f:
-                f.write(json.dumps(config_data))
+            wm.download_book_to_server(task)
 
+            if do_send_to_kindle: #  and not task.is_sent_to_kindle:
+                was_sendt, error_msg = send_file_to_kindle(task, user_kindle_address)
 
-            wm.download_book_to_server(config_data, local_epub_filepath, status_file)
-            
-            status = {
-                    "status": "Finished", 
-                    "download_url": download_url,
-                    "download_id": datahash,
-            }
-            with open(status_file, 'w') as f:
-                f.write(json.dumps(status));
-        
+                if was_sendt:
+                    task.is_sent_to_kindle = True
+
+            task.status = task.FINISHED
 
         import threading
         thread = threading.Thread(target = download_the_book)
         thread.start()
         # download_the_book()
-            
+
         return datahash
-
-        if request.form.get('sendToKindle'):
-            from .sendToKindle import sendToKindle
-
-            kindle_address = user_data.get_kindle_address()
-            if not kindle_address:
-                flash('The kindle email address was not set. Please enter and submit your kindle email address');
-            else:
-                sendToKindle(file = local_epub_filepath,
-                        target_filename='{}.epub'.format(book['title']),
-                        receiver = kindle_address);
-                flash('The email has been sent successfully')
-            return redirect(url_for('books.list_books'))
-
-        try:
-            print('SENDING! "%s"' % local_epub_filepath)
-            return send_file(local_epub_filepath, as_attachment = True, \
-                download_name="%s.epub" % config_data.get('title'))
-        except Exception as e:
-            print(e)
-            print('SENDING FAILED!')
-            flash('file not found')
-            return url_for('books.list_books')
 
     data = wm.get_default_download_config_data()
     chapters = wm.get_book_chapters_list()

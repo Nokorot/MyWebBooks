@@ -84,19 +84,19 @@ class RoyalRoadWM(WebpageManager_Base):
             ))
         return result
 
-    def download_book_to_server(self, config_data, local_epub_filepath, status_file):
-        self.init_epub(config_data)
+    def download_book_to_server(self, task):
+        self.init_epub(task.config_data)
 
-        chapters = config_data.get('chapters')
+        chapters = task.config_data.get('chapters')
         for index, url, title in chapters:
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
             chapter_content = []
-            if config_data.get('include_chapter_titles', True):
+            if task.config_data.get('include_chapter_titles', True):
                 chapter_content.append('<h1>%s</h1>' % title)
 
-            # if config_data.get('include_authors_notes', True):
+            # if task.config_data.get('include_authors_notes', True):
             #     # This is a por solution, since only the first is added and always at the top
             #     note = chapter_page_bs.select('div.author-note-portle')[0]
             #      content.append(note)
@@ -118,7 +118,7 @@ class RoyalRoadWM(WebpageManager_Base):
                         element.extract()
 
             for img in chapter_inner.select('img'):
-                if config_data.get('include_images', False):
+                if task.config_data.get('include_images', False):
                     epub_image_path = self.include_image(img.get('src'))
                     # TODO: Should down-scale imeages, to a more appropriate resolution
                     # imgobj = self.book.add_image(img.get('src'))
@@ -128,7 +128,7 @@ class RoyalRoadWM(WebpageManager_Base):
                 else:
                     img.drop_tree()
 
-            # hr_url = config_data.get('replace_hr_box', "").strip()
+            # hr_url = task.config_data.get('replace_hr_box', "").strip()
             # if hr_url is not "":
             #     from bs4 import BeautifulSoup
             #     from bs4.builder import _lxml
@@ -154,12 +154,6 @@ class RoyalRoadWM(WebpageManager_Base):
 
             self.add_chapter(title, "".join(chapter_content))
 
-            status = {
-                    "status": "Downloading",
-                    "percentage": "%u%s" % ( 100*(index+1) // len(chapters), '%')
-                    # "download_url": download_url
-            }
-            with open(status_file, 'w') as f:
-                f.write(json.dumps(status));
+            task.percentage = 100*(index+1) // len(chapters)
 
-        self.write_epub(local_epub_filepath)
+        self.write_epub(task.local_epub_filepath)

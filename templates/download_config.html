@@ -115,12 +115,14 @@ function checkDownloadStatus(download_id, callback) {
 }
 
 // let Downloading = True;
-function downloadBook(callback) {
+function downloadBook(do_send_to_kindle, callback) {
     // if (Downloading)
     //     return;
     // Downloading = True;
     var formData = new FormData(document.getElementById("form"));
     
+    formData.append('do_send_to_kindle', do_send_to_kindle);
+
     var xhr = new XMLHttpRequest();
     xhr.open('POST', document.URL, true); // "{{ url_for('books.download_config', id=_id) }}"
 
@@ -141,7 +143,7 @@ function downloadBook(callback) {
 }
 
 document.getElementById("downloadButton").addEventListener("click", () => {
-    downloadBook(function (status) {
+    downloadBook(false, function (status) {
         if (response['status'] !== "Finished") {
             console.log("Download NOT Finished");
             return;
@@ -151,18 +153,18 @@ document.getElementById("downloadButton").addEventListener("click", () => {
     });
 });
 
-document.getElementById("sendToKindleButton").addEventListener("click", function () {
-    downloadBook(function (status) {
+document.getElementById("sendToKindleButton").addEventListener("click", () => {
+    downloadBook(true, function (status) {
         if (response['status'] !== "Finished") {
             console.log("Download NOT Finished");
             return;
         }
         console.log("Download Finished");
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', "{{ url_for('books.send_epub_file_to_kindle') }}", true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.send(JSON.stringify({ "download_id": status['download_id']}));
+        // var xhr = new XMLHttpRequest();
+        {# // xhr.open('POST', "{{ url_for('books.send_epub_file_to_kindle') }}", true); #}
+        // xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        // xhr.send(JSON.stringify({ "download_id": status['download_id']}));
     });
 });
 
