@@ -123,11 +123,11 @@ class WebpageManager_Base():
             return epub_image_path
         return self.images[img_url][0]
 
-    def add_chapter(self, title, contnet): # add_images_in_content=True)
+    def add_chapter(self, title : str, content): # add_images_in_content=True)
         self.chapter_count += 1;
         chapter = epub.EpubHtml(title = title,
                     file_name = f'chapter_{self.chapter_count}.xhtml')
-        chapter.set_content(str(contnet))
+        chapter.set_content(str(content))
         self.ebook.add_item(chapter)
         self.ebook.toc.append(chapter)
         self.ebook.spine.append(chapter)

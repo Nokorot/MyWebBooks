@@ -38,9 +38,10 @@ def sendSelfRequest(url):
 
 domain = os.environ['DOMAIN']
 
-import threading
-thread = threading.Thread(target=sendSelfRequest, args=(domain + "/test", ))
-thread.start()
+if not app.config['DEBUG']:
+    import threading
+    thread = threading.Thread(target=sendSelfRequest, args=(domain + "/test", ))
+    thread.start()
 
 @app.route("/")
 def home():
