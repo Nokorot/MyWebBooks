@@ -10,6 +10,12 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=None, target_filename=None):
+    if os.environ.get('DEBUG') == "True":
+        print("DEBUG: sendToKindle: \n\tfile='%s'\n\ttarget='%s'\n\trecever='%s'" % \
+                (file, target_filename, receiver))
+        print("The document is not sent in DEBUG mode!")
+        return
+
     load_dotenv()
     if not receiver or not file:
         return

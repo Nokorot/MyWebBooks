@@ -109,19 +109,10 @@ def send_file_to_kindle(task, user_kindle_address=None):
         flash('The kindle email address was not set. Please enter and submit your kindle email address')
         return False, {'status': 'ERROR', 'error_code': 4, 'error_msg': 'The kindle_address was not set'}
 
-    # print("HEYY ", current_app)
-    # TODO:
-    # current_app is not defined in the task thread
-    # if current_app.config['DEBUG'] == True:
-    #     print("DEBUG: Skipping sending file to kindle in debug mode")
-    # else:
-    #     pass
-
-    if True:
-        title = task.config_data.get('title')
-        sendToKindle(file = task.local_epub_filepath,
-                target_filename="{}.epub".format(title),
-                receiver = user_kindle_address)
+    title = task.config_data.get('title')
+    sendToKindle(file = task.local_epub_filepath,
+            target_filename="{}.epub".format(title),
+            receiver = user_kindle_address)
 
     # NOTE: flash dose not work in task thread
     # flash('The email has been sent successfully')

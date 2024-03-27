@@ -107,8 +107,6 @@ def get_kindle_address():
     sub_query = {'owner_sub' : userinfo['sub']}
     result = mongodb_api.findOne('rr', 'kindle_address', sub_query)
 
-    print(result, userinfo)
-
     if result is None:
         ## Look for an old type db entry
         name_query = {'owner_sub': None, 'owner' : userinfo['name']}
