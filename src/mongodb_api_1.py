@@ -33,7 +33,16 @@ def find(database: str, collection:str, query: dict):
 
 def updateOne(database: str, collection: str, query: dict, update: dict, **kwargs):
     coll = client[database][collection]
+    coll.update_one(query, update, **kwargs)
+
+def setOne(database: str, collection: str, query: dict, update: dict, **kwargs):
+    coll = client[database][collection]
     coll.update_one(query, {"$set" : update }, **kwargs)
+
+def unsetOne(database: str, collection: str, query: dict, update: dict, **kwargs):
+    coll = client[database][collection]
+    coll.update_one(query, {"$unset" : update }, **kwargs)
+
 
 def deleteOne(database: str, collection: str, query: dict):
     coll = client[database][collection]

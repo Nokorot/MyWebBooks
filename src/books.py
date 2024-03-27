@@ -59,101 +59,12 @@ def new_book():
 
     return render_template('forms/new_book.html', **kwargs)
 
-
-@blueprint.route('/edit_book/<id>',methods=['GET', 'POST'])
-@login_required
-@load_bookdata('id', 'book')
-def edit_book(id, book):
-    if not book.is_owner():
-        redirect(url_for('books.list_books'))
-
-    wm = book.get_wm()
-
-    if request.method == 'POST':
-        # TODO: This is severely outdated, should use the wm_class object
-
-        # Update the JSON data with the form values
-        import json
-        with open("data/empty_book_form.json", 'r') as f:
-            book_form_template = json.load(f)
-            form = request.form
-            book_url = form['entry_point']
-            r = requests.request('GET', book_url)
-        if r.status_code != 200:
-            print("page does not exists!")
-        else:
-            book_html = BeautifulSoup(r.text)
-
-        for key in book_form_template.keys():
-            book_form_template[key] = form.get(key)
-            if book_form_template[key] == '':
-                if key == 'cover_image':
-                    book_form_template[key] = book_html.select_one('img.thumbnail').get('src')
-                elif key == 'title':
-                    book_form_template[key] = book_html.select_one('div.fic-title h1').text
-                elif key == 'author':
-                    book_form_template[key] = book_html.select_one('div.fic-title a').text
-
-        mongodb_api.updateOne('rr','books', {'_id': ObjectId(id)}, book_form_template)
-        flash("data updated!")
-        return 'Data updated successfully.'
-
-    entries = wm.get_config_entries()
-    from pprint import pprint
-    pprint(entries)
-
-    kwargs = {
-        "TITLE": "Edit Data",
-        "DERCRIPTION": "",
-        # "SUBMIT": "Save",
-        "DATA": entries,
-        # "NO_REDIRECT_ONSUBMIT": True,
-        # "INCLUDE_IMPORT_EXPORT": True,
-        "ACTION": url_for('books.edit_book', id=id),
-    }
-    return render_template('edit_book.html', **kwargs)
-
-@blueprint.route("/",methods=['GET', 'POST'])
-def head():
-    kwargs = {
-    "TITLE": "RoyalRoad Book Download",
-    "DERCRIPTION": "Enter the url to the fiction page of a royalroad book",
-    "SUBMIT": "Submit",
-    "DATA": {'fiction_page_url': {'label': 'Url', 'type': 'str', 'value': ''}},
-    "ACTION": url_for("royalroad_dl.book_config"),
-    }
-    return render_template('data_form.html', **kwargs)
-
-def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
-    from html_to_epub.util import Network
-    from lxml.cssselect import CSSSelector
-
-    from RR_cnf_gen import first_match, foldername_from_title
-
-    base_url = "https://www.royalroad.com"
-    cache_dir = "./cache/RR"
-    os.makedirs(cache_dir, exist_ok=True)
-
-    cache_filename = Network.cache_filename(cache_dir, url)
-
-
-    tree = Network.load_and_cache_html(url, cache_filename, ignoe_cache)
-
-    result = {}
-    result['TITLE']   = first_match(tree, "div.fic-header h1").text;
-    result['AUTHOR']  = first_match(tree, "div.fic-header h4 a").text;
-    result['COVER']   = first_match(tree, "div.fic-header img").get('src').split('?')[0];
-    result['ENTRY']   = base_url + first_match(tree, "div.portlet table a").get('href').split('?')[0];
-    result['OUTFILE'] = foldername_from_title(result['TITLE'])
-
-    print(result)
-    return result
-
 @blueprint.route('/list_books',methods = ['GET'])
 @login_required
 def list_books():
     books_list = []
 
+    # USER_NAME2SUB: Make sure the kindle_address entry is also converted
     user_data.get_kindle_address()
 
     from src.book_data import get_user_books
@@ -176,7 +87,7 @@ def list_books():
 def delete_book(id):
     with BookData(id) as book:
         if book['owner'] == g.user['userinfo']['name']:
-            book.delete();
+            book.delete()
     return redirect(url_for('books.list_books'))
 
 @blueprint.route('download_status',methods=['POST'])

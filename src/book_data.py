@@ -27,7 +27,8 @@ def get_user_books():
     for book in mongodb_api.find('rr', 'books', name_query):
         # Converts this entry to _NEW_ type
         mongodb_api.updateOne('rr', 'books', book, \
-                {'owner_sub': get_user_sub(), 'owner': None })
+                {'$set':   {'owner_sub': get_user_sub()}, \
+                 '$unset': {'owner': None }})
 
     # List _NEW_ type entries
     user_sub_query = {'owner_sub': get_user_sub()}
@@ -49,7 +50,8 @@ class BookData():
             owner_name = mongod_data.get('owner')
             if owner_name == get_user_name():
                 mongodb_api.updateOne('rr', 'books', \
-                           {'owner_sub': get_user_sub(), 'owner': None })
+                        {'$set':   {'owner_sub': get_user_sub()}, \
+                         '$unset': {'owner': None }})
                 mongod_data.set('owner_sub', get_user_sub())
 
         # NOTE: We are assuming mongod_data agrees with the one on mongodb.
@@ -59,7 +61,7 @@ class BookData():
     def close(self):
         if self.dirty:
             obj_id = ObjectId(self.id)
-            mongodb_api.updateOne('rr','books', {'_id': obj_id}, self.mongod_data)
+            mongodb_api.setOne('rr','books', {'_id': obj_id}, self.mongod_data)
 
     def get(self, key, default=None):
         return self.mongod_data.get(key, default)
@@ -67,7 +69,7 @@ class BookData():
     def set(self, key, value):
         if self.mongod_data.get(key) == value:
             return
-        self.dirty = True;
+        self.dirty = True
         self.mongod_data[key] = value
 
     def delete(self):
@@ -81,7 +83,7 @@ class BookData():
         entry_point = self.get('entry_point')
         if entry_point is None:
             return None
-        wm_class, match = match_url(entry_point)
+        wm_class, _ = match_url(entry_point)
         self.set('wm_class_name', wm_class.__name__)
         return wm_class
 

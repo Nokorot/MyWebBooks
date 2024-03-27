@@ -107,7 +107,7 @@ def get_kindle_address():
     sub_query = {'owner_sub' : userinfo['sub']}
     result = mongodb_api.findOne('rr', 'kindle_address', sub_query)
 
-    print(result)
+    print(result, userinfo)
 
     if result is None:
         ## Look for an old type db entry
@@ -118,7 +118,8 @@ def get_kindle_address():
             # Assign this entry to this user
             # Hopefully it is correct (Should be fine with our current user base)
             mongodb_api.updateOne('rr', 'kindle_address', result, \
-                                  {'owner_sub' : userinfo['sub'], 'owner': None})
+                    {'$set':   {'owner_sub' : userinfo['sub']},   \
+                     '$unset': {'owner': None}})
 
     if result is not None:
         return result.get('kindle_address')
@@ -128,6 +129,6 @@ def set_kindle_address_on_db(kindle_address):
     owner_sub = g.user['userinfo']['sub']
     query = { 'owner_sub' : owner_sub }
     update = { 'owner_sub' : owner_sub, 'kindle_address' : kindle_address}
-    mongodb_api.updateOne('rr', 'kindle_address', query, update, upsert=True)
+    mongodb_api.setOne('rr', 'kindle_address', query, update, upsert=True)
 
     print("Address set", kindle_address)
