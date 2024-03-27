@@ -64,7 +64,7 @@ def new_book():
 @login_required
 @load_bookdata('id', 'book')
 def edit_book(id, book):
-    if not book.is_owner(g.user['userinfo']['name']):
+    if not book.is_owner():
         redirect(url_for('books.list_books'))
 
     wm = book.get_wm()
@@ -153,6 +153,8 @@ def royalroad_cofig_from_fiction_page(url, ignoe_cache = False):
 @login_required
 def list_books():
     books_list = []
+
+    user_data.get_kindle_address()
 
     from src.book_data import get_user_books
     # Prepare the data list to pass to the template

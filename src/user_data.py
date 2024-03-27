@@ -1,6 +1,8 @@
 import src.mongodb_api_1 as mongodb_api
 from flask import g, request, render_template, redirect, url_for
 
+import os
+
 from src.login import login_required
 
 from auth0.management import Auth0
@@ -19,9 +21,9 @@ def set_kindle_address():
             # Not sure valuation is necessary
             kindle_address = request.form.get('kindle_address')
             validate_email(kindle_address)
-            set_kindle_address(kindle_address)
+            set_kindle_address_on_db(kindle_address)
 
-            return redirect(url_for('home'));
+            return redirect(url_for('home'))
 
             """
             import jwt
@@ -94,17 +96,38 @@ def get_auth0_info():
     auth0 = Auth0(os.environ.get('AUTH0_DOMAIN'), mgmt_token)
     return auth0.users.get(g.user['userinfo']['sub'])
 
+def get_user_sub():
+    return g.user['userinfo']['sub']
+
 def get_kindle_address():
-    query = {'owner' : g.user['userinfo']['name']}
-    result = mongodb_api.findOne('rr', 'kindle_address', query)
-    if result:
+    # TAG: USER_NAME2SUB
+
+    userinfo = g.user['userinfo']
+
+    sub_query = {'owner_sub' : userinfo['sub']}
+    result = mongodb_api.findOne('rr', 'kindle_address', sub_query)
+
+    print(result)
+
+    if result is None:
+        ## Look for an old type db entry
+        name_query = {'owner_sub': None, 'owner' : userinfo['name']}
+        result = mongodb_api.findOne('rr', 'kindle_address', name_query)
+
+        if result is not None:
+            # Assign this entry to this user
+            # Hopefully it is correct (Should be fine with our current user base)
+            mongodb_api.updateOne('rr', 'kindle_address', result, \
+                                  {'owner_sub' : userinfo['sub'], 'owner': None})
+
+    if result is not None:
         return result.get('kindle_address')
     return None
 
-def set_kindle_address(kindle_address):
-    owner = g.user['userinfo']['name']
-    query = { 'owner' : owner }
-    update = { 'owner' : owner, 'kindle_address' : kindle_address}
+def set_kindle_address_on_db(kindle_address):
+    owner_sub = g.user['userinfo']['sub']
+    query = { 'owner_sub' : owner_sub }
+    update = { 'owner_sub' : owner_sub, 'kindle_address' : kindle_address}
     mongodb_api.updateOne('rr', 'kindle_address', query, update, upsert=True)
 
     print("Address set", kindle_address)

@@ -1,11 +1,10 @@
 
 from bson.objectid import ObjectId
-import src.mongodb_api_1 as mongodb_api # import *
+import src.mongodb_api_1 as mongodb_api
 import functools
 
 from src.webpages import get_wm_class, match_url
-
-from src.user_data import get_user_name
+from src.user_data import get_user_name, get_user_sub
 
 def load_bookdata(id_name='id', book_data_name='book'):
     def decorator(func):
@@ -21,10 +20,21 @@ def load_bookdata(id_name='id', book_data_name='book'):
     return decorator
 
 def get_user_books():
-    for book in mongodb_api.find('rr', 'books', {'owner': get_user_name()}):
+    # TAG: USER_NAME2SUB
+
+    # List _OLD_ type entries
+    name_query = {'owner': get_user_name(), 'owner_sub': None}
+    for book in mongodb_api.find('rr', 'books', name_query):
+        # Converts this entry to _NEW_ type
+        mongodb_api.updateOne('rr', 'books', book, \
+                {'owner_sub': get_user_sub(), 'owner': None })
+
+    # List _NEW_ type entries
+    user_sub_query = {'owner_sub': get_user_sub()}
+    for book in mongodb_api.find('rr', 'books', user_sub_query):
         with BookData(book['_id'], book) as bd:
             yield bd
-    
+
 class BookData():
     def __init__(self, id, mongod_data=None):
         self.id = id
@@ -32,8 +42,18 @@ class BookData():
             obj_id = ObjectId(self.id)
             mongod_data = mongodb_api.findOne('rr', 'books', {'_id': obj_id})
         self.mongod_data = mongod_data
+
+        # TAG: USER_NAME2SUB
+        # This is probably unnecessary
+        if mongod_data.get('owner_sub') is None:
+            owner_name = mongod_data.get('owner')
+            if owner_name == get_user_name():
+                mongodb_api.updateOne('rr', 'books', \
+                           {'owner_sub': get_user_sub(), 'owner': None })
+                mongod_data.set('owner_sub', get_user_sub())
+
         # NOTE: We are assuming mongod_data agrees with the one on mongodb.
-        #   It is used when we loop through the entries of find in list_books 
+        #   It is used when we loop through the entries of find in list_books
         self.dirty = False
 
     def close(self):
@@ -60,7 +80,7 @@ class BookData():
             return get_wm_class(wm_class_name)
         entry_point = self.get('entry_point')
         if entry_point is None:
-            return None 
+            return None
         wm_class, match = match_url(entry_point)
         self.set('wm_class_name', wm_class.__name__)
         return wm_class
@@ -71,8 +91,8 @@ class BookData():
             return None
         return wm_class(self.id, self)
 
-    def is_owner(self, user_name):
-        return self.mongod_data.get('owner') == user_name 
+    def is_owner(self):
+        return self.mongod_data.get('owner_sub') == get_user_sub()
 
     def __getitem__(self, key):
         return self.get(key)
