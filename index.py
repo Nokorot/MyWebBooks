@@ -15,6 +15,7 @@ app.secret_key = os.environ['APP_SECRET_KEY']
 
 if __name__ == "__main__":
     app.config['DEBUG'] = True 
+    os.environ['DEBUG'] = "True" # This is accessible in all threads
 
 # Enable HTML minification
 app.config['MINIFY_HTML'] = not app.config['DEBUG']

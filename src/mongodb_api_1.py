@@ -31,6 +31,10 @@ def find(database: str, collection:str, query: dict):
     coll = client[database][collection]
     return coll.find(query)
 
+def updateMany(database: str, collection: str, query: dict, update: dict, **kwargs):
+    coll = client[database][collection]
+    coll.update_many(query, update, **kwargs)
+
 def updateOne(database: str, collection: str, query: dict, update: dict, **kwargs):
     coll = client[database][collection]
     coll.update_one(query, update, **kwargs)
