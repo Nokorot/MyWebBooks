@@ -306,9 +306,9 @@ def download_config(id, book):
 
         user_kindle_address = user_data.get_kindle_address()
 
+        # TODO: Using the datahash as an id is a bit odd. Unconventional at best
+        #       and it might cause unforeseen problems.
         global g_download_tasks
-        print(g_download_tasks, datahash)
-
         if not g_download_tasks.__contains__(datahash):
             task = DownloadTask(datahash)
             task.config_data = config_data
@@ -330,6 +330,9 @@ def download_config(id, book):
                 send_file_to_kindle(task, user_kindle_address)
                 task.is_sent_to_kindle = True
 
+            book.close()  # This updates mongodb,
+            # Need to do it manually, since this is on a different thread
+
             return task.status_msg()
 
         def download_the_book():
@@ -345,6 +348,7 @@ def download_config(id, book):
 
                 if was_sendt:
                     task.is_sent_to_kindle = True
+                book.close()
 
             task.status = task.FINISHED
 
