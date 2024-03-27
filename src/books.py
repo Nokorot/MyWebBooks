@@ -99,6 +99,9 @@ def download_status():
         return "{'status': 'ERROR', 'error_code': 1, 'error_msg': 'download_id was not given'}"
 
     task = DownloadTask.byID(download_id)
+    
+    print(download_id, task.__dict__)
+
     return task.status_msg()
 
 def send_file_to_kindle(task, user_kindle_address=None):
@@ -220,6 +223,8 @@ def download_config(id, book):
             task.download_url = url_for("books.download_epub_file", download_id=task.id)
             if os.path.exists(task.local_epub_filepath):
                 task.status = task.FINISHED
+
+            g_download_tasks[datahash] = task
         else:
             task = g_download_tasks.get(datahash)
             if task.status == task.DOWNLOADING:
@@ -237,10 +242,11 @@ def download_config(id, book):
             book.close()  # This updates mongodb,
             # Need to do it manually, since this is on a different thread
 
-            return task.status_msg()
+            return datahash # TODO: This should be changed to a dict, with task.status_msg()
 
         def download_the_book():
-            task.status = task.DOWNLOADING
+            # task.status = task.DOWNLOADING
+            g_download_tasks[datahash].status = task.DOWNLOADING
             task.percentage = 0
 
             wm.download_book_to_server(task)
@@ -254,7 +260,8 @@ def download_config(id, book):
                     task.is_sent_to_kindle = True
                 book.close()
 
-            task.status = task.FINISHED
+            # task.status = task.FINISHED
+            g_download_tasks[datahash].status = task.FINISHED
 
         import threading
         thread = threading.Thread(target = download_the_book)

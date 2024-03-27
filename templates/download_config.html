@@ -148,7 +148,7 @@ function downloadBook(do_send_to_kindle, callback) {
 }
 
 document.getElementById("downloadButton").addEventListener("click", () => {
-    downloadBook(false, function (status) {
+    downloadBook(false, function (response) {
         if (response['status'] !== "Finished") {
             console.log("Download NOT Finished");
             return;
@@ -159,12 +159,14 @@ document.getElementById("downloadButton").addEventListener("click", () => {
 });
 
 document.getElementById("sendToKindleButton").addEventListener("click", () => {
-    downloadBook(true, function (status) {
+    downloadBook(true, function (response) {
         if (response['status'] !== "Finished") {
-            console.log("Download NOT Finished");
+            console.log("Download NOT Finished\n response:", response);
+            console.log(response);
             return;
         }
         console.log("Download Finished");
+        location.refresh();
     });
 });
 
