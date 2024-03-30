@@ -44,18 +44,13 @@ def __init(app):
     @app.route('/logout')
     def logout():
         session.clear()
-        return redirect(
-            "https://"
-            + os.environ.get("AUTH0_DOMAIN")
-            + "/v2/logout?"
-            + urlencode(
-            {
-            "returnTo": url_for("books.list_books", _external=True),
-            "client_id": os.environ.get("AUTH0_CLIENT_ID"),
-            },
-            quote_via=quote_plus,
-            )
-        )
+
+        domain = os.environ.get("AUTH0_DOMAIN")
+        client_id = os.environ.get("AUTH0_CLIENT_ID")
+        return_to = url_for('login', _external=True)  # Assuming 'home' is the function name of your home page view
+
+        logout_url = f'https://{domain}/v2/logout?client_id={client_id}&returnTo={return_to}'
+        return redirect(logout_url)
 
 def login_required(view):
     @functools.wraps(view)
