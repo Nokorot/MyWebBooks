@@ -42,11 +42,11 @@ class AsyncDownloadTask():
     def create_or_get(book: BookData, download_config: dict, userinfo: dict):
         wm = book.get_wm()
         datahash = wm.genereate_download_config_hash(download_config)
-    
+
         # TODO: Using the datahash as an id is a bit odd. Unconventional at best
         #       and it might cause unforeseen problems.
         _id = datahash
-        
+
         # global g_download_tasks
         if not g_download_tasks.__contains__(_id):
             task = AsyncDownloadTask(_id, book, download_config, userinfo)
@@ -110,10 +110,8 @@ class AsyncDownloadTask():
     def _download_the_book(self):
         wm = self.book.get_wm()
         wm.download_book_to_server(self)
-    
         if self.do_send_to_kindle:
             self._send_to_kindle()
-    
         self.status = AsyncDownloadTask.FINISHED
 
     def _send_to_kindle(self):
@@ -123,12 +121,10 @@ class AsyncDownloadTask():
         self.is_sent_to_kindle = True
         self.book.set("last_send_to_kindle", int(datetime.now().timestamp()))
         self.book.push()
-    
         user_sub = self.userinfo.get('sub')
-        
         kindle_address = user_data.get_kindle_address(user_sub)
         if kindle_address is None:
-            return 
+            return
 
         title = self.download_config.get('title')
         print("DEBUG: Sending book {} ({})".format(title, self.id))
@@ -136,6 +132,5 @@ class AsyncDownloadTask():
         sendToKindle(file = self.local_epub_filepath,
                 target_filename="{}.epub".format(title),
                 receiver = kindle_address)
-    
         # NOTE: flash dose not work in task thread
         # flash('The email has been sent successfully')

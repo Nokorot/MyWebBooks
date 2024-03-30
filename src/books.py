@@ -89,7 +89,6 @@ def download_config(id, book):
     if request.method == 'POST':
         config_data = wm.parse_download_config_data_form(request.form)
         do_send_to_kindle = request.form.get("do_send_to_kindle") == 'true'
-        
         downloadTask = AsyncDownloadTask.create_or_get( \
                 book, config_data, g.userinfo)
 
@@ -117,13 +116,13 @@ def download_config(id, book):
 @blueprint.route('download_epub_file/<download_id>',methods=['GET'])
 def download_epub_file(download_id):
     task = AsyncDownloadTask.byID(download_id)
-    # TODO: Could store the download_config as a file, when FINISHED, 
+    # TODO: Could store the download_config as a file, when FINISHED,
     # So that the file may be accessible even when the task is removed from memory
 
     if task is None:
         responce = {
-            'status': 'ERROR', 
-            'error_code': 1, 
+            'status': 'ERROR',
+            'error_code': 1,
             'error_msg': f"The download task '{download_id}' does not exit" }
         return json.dumps(responce)
 
@@ -132,8 +131,8 @@ def download_epub_file(download_id):
 
     if (not os.path.exists(task.local_epub_filepath)):
         responce = {
-            'status': 'ERROR', 
-            'error_code': 2, 
+            'status': 'ERROR',
+            'error_code': 2,
             'error_msg': f"epub_file does not exists" }
         return json.dumps(responce)
 
@@ -157,8 +156,8 @@ def download_status():
     task = AsyncDownloadTask.byID(download_id)
     if task is None:
         responce = {
-            'status': 'ERROR', 
-            'error_code': 1, 
+            'status': 'ERROR',
+            'error_code': 1,
             'error_msg': f"The download task '{download_id}' does not exit" }
         return json.dumps(responce)
 
