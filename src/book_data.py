@@ -39,7 +39,7 @@ def get_user_books():
 def add_new_book_entry(wm_class_name, data_entries):
     mongodb_api.insertOne('rr', 'books', {
         'owner_sub' : get_user_sub(),
-        'wm_class_name': wm_class_name_,
+        'wm_class_name': wm_class_name,
         **data_entries,
         })
 
