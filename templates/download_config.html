@@ -103,7 +103,7 @@ function checkDownloadStatus(download_id, callback) {
             console.log("Status response: ");
             console.log(xhr.response);
             response = JSON.parse(xhr.response);
-
+            
             if (response['status'] === "Downloading") {
                 document.getElementById('status-bar').style.width = response['percentage'];
             } else {
@@ -139,7 +139,10 @@ function downloadBook(do_send_to_kindle, callback) {
 
             console.log("Download response: ");
             console.log(xhr.response);
-            nIntervId = setInterval(checkDownloadStatus, 500, xhr.response, callback);
+            response = JSON.parse(xhr.response);
+            download_id = response["download_id"];
+
+            nIntervId = setInterval(checkDownloadStatus, 500, download_id, callback);
         } else {
             alert('Form submission failed');
         }
@@ -153,8 +156,11 @@ document.getElementById("downloadButton").addEventListener("click", () => {
             console.log("Download NOT Finished");
             return;
         }
+
+
         console.log("Download Finished");
-        window.location.href = status['download_url'];
+        console.log(response);
+        window.location.href = response['download_url'];
     });
 });
 
@@ -166,7 +172,7 @@ document.getElementById("sendToKindleButton").addEventListener("click", () => {
             return;
         }
         console.log("Download Finished");
-        location.refresh();
+        location.reload();
     });
 });
 

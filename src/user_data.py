@@ -86,7 +86,7 @@ def reset_password():
     return render_template("forms/reset_password.html", **kwargs)
 
 def get_user_name():
-    return g.user['userinfo']['name']
+    return g.userinfo.get('name') if g.userinfo else None
 
 def get_auth0_info():
     get_token = GetToken(os.environ.get('AUTH0_DOMAIN'), os.environ.get('MGMT_API_CLIENT_ID'), client_secret = os.environ.get('MGMT_API_SECRET'))
@@ -97,26 +97,33 @@ def get_auth0_info():
     return auth0.users.get(g.user['userinfo']['sub'])
 
 def get_user_sub():
-    return g.user['userinfo']['sub']
+    return g.user_sub
 
-def get_kindle_address():
+def get_kindle_address(user_sub = None):
     # TAG: USER_NAME2SUB
+    
+    if user_sub is None:
+        if g.user_sub is None:
+            return None
+        user_sub = g.user_sub
 
-    userinfo = g.user['userinfo']
-
-    sub_query = {'owner_sub' : userinfo['sub']}
+    sub_query = {'owner_sub' : user_sub}
     result = mongodb_api.findOne('rr', 'kindle_address', sub_query)
 
     if result is None:
+        if g.userinfo is None:
+            return None
+        user_name = g.userinfo['name']
+
         ## Look for an old type db entry
-        name_query = {'owner_sub': None, 'owner' : userinfo['name']}
+        name_query = {'owner_sub': None, 'owner' : user_name}
         result = mongodb_api.findOne('rr', 'kindle_address', name_query)
 
         if result is not None:
             # Assign this entry to this user
             # Hopefully it is correct (Should be fine with our current user base)
             mongodb_api.updateOne('rr', 'kindle_address', result, \
-                    {'$set':   {'owner_sub' : userinfo['sub']},   \
+                    {'$set':   {'owner_sub' : g.userinfo['sub']},   \
                      '$unset': {'owner': None}})
 
     if result is not None:

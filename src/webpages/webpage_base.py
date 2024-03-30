@@ -3,6 +3,8 @@ import src.download_manager as dm
 
 import re
 
+from PIL import UnidentifiedImageError
+
 class WebpageManager_Base():
     download_config_entries = {
         "title": {'label': "Title"},
@@ -42,7 +44,7 @@ class WebpageManager_Base():
                 value = default_method()
                 self.book.set(key, value)
                 return value
-        except Exception as e:
+        except Exception:
             import traceback
             traceback.print_exc()
             return None
@@ -55,14 +57,19 @@ class WebpageManager_Base():
 
         for key, value in self.download_config_entries.items():
             ## Only if value is not %customized, or otherwise marked as do not update
-            data[key] = { **value, 'value': self.get_book_data(key, force_default=True) };
+            data[key] = { **value, 'value': self.get_book_data(key, force_default=True) }
         return data
 
     def genereate_download_config_hash(self, download_config_data):
         from hashlib import sha256
         import json, base64
+    
+        data = {
+            'user_sub': self.book.get('owner_sub'), # This is a hack to make it different for each user
+            'config_data': download_config_data
+        }
 
-        shahash = sha256(json.dumps(download_config_data).encode('utf-8'))
+        shahash = sha256(json.dumps(data).encode('utf-8'))
         return base64.b64encode(shahash.digest()).decode().replace('/','_')
 
     def parse_download_config_data_form(self, form_data):
@@ -111,8 +118,12 @@ class WebpageManager_Base():
         if self.images.get(img_url) is None:
             image_count = len(self.images.keys())
             epub_image_path = 'images/image_%u.jpg' % image_count
-    
-            data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
+            
+            try:
+                data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
+            except UnidentifiedImageError:
+                return None
+
             img = epub.EpubImage(
                     uid         = 'image_%u' % (image_count),
                     file_name   = epub_image_path,

@@ -82,15 +82,18 @@ def get_and_cache_html(url, ignore_cache=False):
     return BeautifulSoup(content, features="lxml")
 
 def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height=8096):
-    cache_filepath = "%s_%u_%u.jpg" % (get_cache_filepath(url, fileext=''), max_width, max_height)
+    base_cache_filepath = get_cache_filepath(url, fileext='')
+
+    cache_filepath = "%s_%u_%u.jpg" % (base_cache_filepath, max_width, max_height)
 
     if not ignore_cache and is_valid_cache(cache_filepath):
         return read_valid_cache_file(cache_filepath)
 
-    content = get_and_cache_data(url, fileext=None, ignore_cache=ignore_cache)
+    content = get_and_cache_data(url, cache_filepath=base_cache_filepath, ignore_cache=ignore_cache)
     content_io = io.BytesIO(content)
 
     from PIL import Image
+    # im = Image.open(base_cache_filepath)
     im = Image.open(content_io, 'r')
     width, height = im.size
 
@@ -98,7 +101,7 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
     im.save(cache_filepath, format=im.format.upper())
     return read_valid_cache_file(cache_filepath)
 
-##The Following is not really tested but it is way to complicated anyway
+## The Following is not really tested but it is way to complicated anyway
 #def get_and_cache_image_data(url, cache_info_filepath=None, ignore_cache=False, max_width=None, max_height=None):
 #if cache_info_filepath is None:
 #cache_info_filepath = get_cache_filepath(url, '.json')

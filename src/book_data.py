@@ -14,7 +14,7 @@ def load_bookdata(id_name='id', book_data_name='book'):
             book_data = BookData(id)
             kwargs[book_data_name] = book_data
             result = func(*args, **kwargs)
-            book_data.close()
+            book_data.push()
             return result;
         return wrapped_func
     return decorator
@@ -36,6 +36,13 @@ def get_user_books():
         with BookData(book['_id'], book) as bd:
             yield bd
 
+def add_new_book_entry(wm_class_name, data_entries):
+    mongodb_api.insertOne('rr', 'books', {
+        'owner_sub' : get_user_sub(),
+        'wm_class_name': wm_class_name_,
+        **data_entries,
+        })
+
 class BookData():
     def __init__(self, id, mongod_data=None):
         self.id = id
@@ -43,6 +50,7 @@ class BookData():
             obj_id = ObjectId(self.id)
             mongod_data = mongodb_api.findOne('rr', 'books', {'_id': obj_id})
         self.mongod_data = mongod_data
+        self.wm = None
 
         # TAG: USER_NAME2SUB
         # This is probably unnecessary
@@ -58,10 +66,16 @@ class BookData():
         #   It is used when we loop through the entries of find in list_books
         self.dirty = False
 
-    def close(self):
+    def push(self):
         if self.dirty:
+            self.dirty = False
+            print("DEBUG: Updating database, book {}".format(self.mongod_data['title']))
+
             obj_id = ObjectId(self.id)
             mongodb_api.setOne('rr','books', {'_id': obj_id}, self.mongod_data)
+
+    close = push # deprecated: alias
+
 
     def get(self, key, default=None):
         return self.mongod_data.get(key, default)
@@ -88,10 +102,14 @@ class BookData():
         return wm_class
 
     def get_wm(self):
+        if self.wm is not None:
+            return self.wm
         wm_class = self.get_wm_class()
         if wm_class is None:
             return None
-        return wm_class(self.id, self)
+
+        self.wm = wm_class(self.id, self)
+        return self.wm
 
     def is_owner(self):
         return self.mongod_data.get('owner_sub') == get_user_sub()
@@ -107,6 +125,6 @@ class BookData():
 
     def __exit__(self, etype, value, tb):
         if tb is None:
-            self.close()
+            self.push()
             # No Exception occurred
             return

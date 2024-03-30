@@ -58,13 +58,13 @@ def test():
 def load_logged_in_user():
     g.user = session.get('user')
 
+    g.userinfo = g.user.get('userinfo') if g.user is not None else None
+    g.user_sid = g.userinfo.get('sid') if g.userinfo is not None else None
+    g.user_sub = g.userinfo.get('sub') if g.userinfo is not None else None
+
 @app.template_filter('get')
 def get_value(dictionary, key):
     return dictionary.get(key, "")
-
-@app.route('/set_kindle_address', methods = ['GET','POST'])
-def set_kindle_address():
-    return redirect(url_for('user_data.set_kindle_address'))
 
 import src.login
 src.login.__init(app)

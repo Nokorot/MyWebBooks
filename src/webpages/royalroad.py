@@ -87,18 +87,18 @@ class RoyalRoadWM(WebpageManager_Base):
         return result
 
     def download_book_to_server(self, task):
-        self.init_epub(task.config_data)
+        self.init_epub(task.download_config)
 
-        chapters = task.config_data.get('chapters')
+        chapters = task.download_config.get('chapters')
         for index, url, title in chapters:
             chapter_url = urljoin(self.base_url, url)
             chapter_page_bs = dm.get_and_cache_html(chapter_url)
 
             chapter_content = []
-            if task.config_data.get('include_chapter_titles', True):
+            if task.download_config.get('include_chapter_titles', True):
                 chapter_content.append('<h1>%s</h1>' % title)
 
-            # if task.config_data.get('include_authors_notes', True):
+            # if task.download_config.get('include_authors_notes', True):
             #     # This is a por solution, since only the first is added and always at the top
             #     note = chapter_page_bs.select('div.author-note-portle')[0]
             #      content.append(note)
@@ -120,17 +120,29 @@ class RoyalRoadWM(WebpageManager_Base):
                         element.extract()
 
             for img in chapter_inner.select('img'):
-                if task.config_data.get('include_images', False):
-                    epub_image_path = self.include_image(img.get('src'))
+                if task.download_config.get('include_images', False):
+                    src_url = img.get('src')
+
+                    print(type(img), img.__dict__)
+                    if src_url is None:
+                        img.decompose()
+                        continue
+                    
+                    epub_image_path = self.include_image(src_url)
+                    if epub_image_path is None:
+                        img.decompose()
+                        ## TODO: Warning: flash
+                        continue
+
                     # TODO: Should down-scale imeages, to a more appropriate resolution
                     # imgobj = self.book.add_image(img.get('src'))
                     # imgobj.add_reference(self)
 
                     img['src'] = epub_image_path
                 else:
-                    img.drop_tree()
+                    img.decompose()
 
-            # hr_url = task.config_data.get('replace_hr_box', "").strip()
+            # hr_url = task.download_config.get('replace_hr_box', "").strip()
             # if hr_url is not "":
             #     from bs4 import BeautifulSoup
             #     from bs4.builder import _lxml

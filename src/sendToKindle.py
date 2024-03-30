@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=None, target_filename=None):
+def sendToKindle(receiver=None, file=None, target_filename=None):
     if os.environ.get('DEBUG') == "True":
         print("DEBUG: sendToKindle: \n\tfile='%s'\n\ttarget='%s'\n\trecever='%s'" % \
                 (file, target_filename, receiver))
@@ -19,10 +19,9 @@ def sendToKindle(sender='lisathelibrarian2000@gmail.com', receiver=None, file=No
     load_dotenv()
     if not receiver or not file:
         return
-
+    
+    sender = os.environ.get("GMAIL")
     password = os.environ.get("GMAIL_PASSWORD")
-    print(password)
-
     message = constructMessage(sender, receiver, file, target_filename)
     sendEmail(sender, password, receiver, message)
 

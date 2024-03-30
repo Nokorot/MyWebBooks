@@ -46,7 +46,7 @@ function submitForm(event) {
 
     // Create a new AJAX request
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', "{{url_for('set_kindle_address')}}", true);
+    xhr.open('POST', "{{url_for('user_data.set_kindle_address')}}", true);
 
     // Handle the AJAX response
     xhr.onload = function () {
