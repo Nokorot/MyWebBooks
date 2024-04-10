@@ -1,4 +1,14 @@
 
+/* This should remove the scroll-bar. At least in chrome */
+.element::-webkit-scrollbar {
+    display: none;
+}
+/* For IE, Edge, and Firefox 64+ */
+.element {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0px;
@@ -392,3 +402,47 @@ input:checked + .slider:before {
 }
 
 .dropdown-content a:hover {background-color: #ddd;}
+
+/* Pagination */
+.pagination, .pagination li {
+    display: inline-block;
+}
+
+#pagination {
+    text-align: right;
+}
+
+.pagination {
+    line-height: 1rem;
+    list-style: none;
+    margin-top: 20px;
+    padding: 0 0px 0 0;
+    vertical-align: top;
+}
+
+.pagination .ellipsis span {
+    -webkit-touch-callout: none;
+    border: none;
+    cursor: default;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.pagination a , .pagination span {
+    border: none;
+    color: #fff;
+    display: inline-block;
+    height: 2.75rem;
+    line-height: 1rem;
+    width: 2.1rem;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+}
+
+.pagination li.page-active a {
+    background: #3c86c6;
+    color: #fff;
+}

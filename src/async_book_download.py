@@ -15,6 +15,7 @@ g_download_tasks = {}
 
 class AsyncDownloadTask():
     FINISHED = "Finished"
+    ERROR = "ERROR"
     DOWNLOADING = "Downloading"
 
     def __init__(self, _id: str, book: BookData,
@@ -63,6 +64,10 @@ class AsyncDownloadTask():
         return json.dumps(self._status_msg_response())
 
     def start_download(self):
+        if self.status is AsyncDownloadTask.ERROR:
+            print("DEBUG: Task [{}] encountered an error!")
+            return
+
         if self.status is AsyncDownloadTask.FINISHED:
             print("DEBUG: Task [{}] is already finished")
             if self.do_send_to_kindle and not self.is_sent_to_kindle:
@@ -100,7 +105,9 @@ class AsyncDownloadTask():
             return responce
 
         responce["status"] = self.status
-        if self.status == AsyncDownloadTask.FINISHED:
+        if self.status == AsyncDownloadTask.ERROR:
+            responce["error_msg"]           = self.error_msg
+        elif self.status == AsyncDownloadTask.FINISHED:
             responce["download_url"]        = self.download_url
         elif self.status == AsyncDownloadTask.DOWNLOADING:
             responce["percentage"] = "%u%s" % ( self.percentage, '%')
@@ -109,7 +116,14 @@ class AsyncDownloadTask():
 
     def _download_the_book(self):
         wm = self.book.get_wm()
-        wm.download_book_to_server(self)
+        try:
+            wm.download_book_to_server(self)
+        except Exception as e:
+            self.status = AsyncDownloadTask.ERROR
+            self.error_msg = str(e)
+            print("ERRROR ", e)
+            return
+
         if self.do_send_to_kindle:
             self._send_to_kindle()
         self.status = AsyncDownloadTask.FINISHED

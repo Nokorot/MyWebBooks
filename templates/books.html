@@ -7,10 +7,6 @@
 {%block title%}Book Data List{%endblock title%}
 
 {% block body %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-
     <div style="text-align: center;">
     <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
     </div>
@@ -31,7 +27,7 @@
         {% endfor %}
     </div>
     {#  </div> #}
-    <script src="/static/epub/test.js"></script>
+    {# <script src="/static/epub/test.js"></script> #}
 
 
 <script>

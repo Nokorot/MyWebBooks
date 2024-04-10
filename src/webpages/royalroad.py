@@ -5,6 +5,8 @@ import src.download_manager as dm
 from bs4 import BeautifulSoup
 
 from urllib.parse import urljoin
+from urllib.error import HTTPError
+
 import json, re
 from datetime import datetime
 # This file is intended to contain all the royalroad specific functionality
@@ -90,9 +92,16 @@ class RoyalRoadWM(WebpageManager_Base):
         self.init_epub(task.download_config)
 
         chapters = task.download_config.get('chapters')
-        for index, url, title in chapters:
+        print(chapters)
+
+        for index, (_, url, title) in enumerate(chapters):
             chapter_url = urljoin(self.base_url, url)
-            chapter_page_bs = dm.get_and_cache_html(chapter_url)
+            
+            try:
+                chapter_page_bs = dm.get_and_cache_html(chapter_url)
+            except (HTTPError): 
+                # TODO: Report this in the download status.
+                continue
 
             chapter_content = []
             if task.download_config.get('include_chapter_titles', True):
@@ -141,28 +150,6 @@ class RoyalRoadWM(WebpageManager_Base):
                     img['src'] = epub_image_path
                 else:
                     img.decompose()
-
-            # hr_url = task.download_config.get('replace_hr_box', "").strip()
-            # if hr_url is not "":
-            #     from bs4 import BeautifulSoup
-            #     from bs4.builder import _lxml
-
-            #     epub_image_path = self.include_image(hr_url)
-
-            #     # String of HTML code for the <img> tag
-
-            #     # NOTE: This could be user defined.
-            #     img_html_code = """<div align="center" style="text-align:center; margin:1em">
-            #                     <img src="{}" width="80%"/></div>""".format(epub_image_path)
-
-            #     for hr in chapter_inner.select('hr'):
-            #         # Create a new Tag object from the HTML code
-
-            #         soup = BeautifulSoup(img_html_code, 'html.parser')
-            #         img_tag = soup.find()
-            #         # Tag(_lxml, 'img', None, True, img_html_code, True, None)
-
-            #         hr.replace_with(img_tag)
 
             chapter_content.append(str(chapter_inner))
 
