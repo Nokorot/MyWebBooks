@@ -7,8 +7,6 @@ from datetime import datetime
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 
-
-
 base_cache_dir="./cache"
 
 #This information is send to the server with the request
@@ -19,8 +17,6 @@ hdrs= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML,
 'Accept-Language': 'en-US,en;q=0.8',
 'Connection': 'keep-alive'}
 
-#from bs4 import BeautifulSoup
-
 def get_url_hash(url):
     return hashlib.md5(url.encode('utf-8')).hexdigest()
 
@@ -30,13 +26,6 @@ def get_cache_filepath(url, fileext=None):
     return os.path.join(base_cache_dir, get_url_hash(url)) + fileext
 
 def is_valid_cache(cache_filepath):
-    # _cache_info_filepath = cache_info_filepath(cache_filepath)
-    # if not os.path.exists(_cache_info_filepath):
-    #     return False
-
-    # read_cache_info_file(cache_filepath)
-    # TODO: There should be a cache life time
-
     return os.path.isfile(cache_filepath)
 
 def read_valid_cache_file(cache_filepath):
@@ -71,18 +60,6 @@ def get_and_cache_data(url, fileext=None, cache_filepath=None, ignore_cache=Fals
 
     write_to_cache_file(content, cache_filepath)
     return content
-
-# def cache_info_filepath(cache_filepath):
-#     return "%s_info.json" % cache_filepath
-
-##TODO: Instead of having a info file for each image, could just have one for all of them
-# def read_cache_info_file(_cache_info_filepath):
-#     with open(_cache_info_filepath, 'r') as f:
-#         return json.load(f)
-
-# def wrtie_cache_info_file(info, cache_filepath):
-#     with open(cache_info_filepath(cache_filepath), 'w') as f:
-#         f.write(json.dumps(info))
 
 def get_html(url, ignore_cache=False):
     content = get_data(url, fileext='.html', ignore_cache=ignore_cache)
@@ -173,7 +150,6 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
 ##logging.getLogger().debug('Loading html dom from ' + cache_filename)
 ##
 ##return lxml.html.fromstring(f.read()) # .decode('utf-8', 'ignore')
-
 
 
 
