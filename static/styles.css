@@ -1,4 +1,14 @@
 
+/* This should remove the scroll-bar. At least in chrome */
+.element::-webkit-scrollbar {
+    display: none;
+}
+/* For IE, Edge, and Firefox 64+ */
+.element {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0px;
