@@ -105,8 +105,12 @@ function checkDownloadStatus(download_id, callback) {
 
             if (response['status'] === "Downloading") {
                 document.getElementById('status-bar').style.width = response['percentage'];
+            } else if (response['status'] === "ERROR") {
+                document.getElementById('status').style.display = 'none';
+                console.log("Download encountered an error: ", response['error_msg']);
+                clearInterval(nIntervId);
             } else {
-                document.getElementById('status').style.display = 'none'
+                document.getElementById('status').style.display = 'none';
                 clearInterval(nIntervId);
                 callback(response);
             }
@@ -152,7 +156,7 @@ function downloadBook(do_send_to_kindle, callback) {
 document.getElementById("downloadButton").addEventListener("click", () => {
     downloadBook(false, function (response) {
         if (response['status'] !== "Finished") {
-            console.log("Download NOT Finished");
+            console.log("Unreachable! Download NOT Finished");
             return;
         }
 
@@ -166,7 +170,7 @@ document.getElementById("downloadButton").addEventListener("click", () => {
 document.getElementById("sendToKindleButton").addEventListener("click", () => {
     downloadBook(true, function (response) {
         if (response['status'] !== "Finished") {
-            console.log("Download NOT Finished\n response:", response);
+            console.log("Unreachable! Download NOT Finished\n response:", response);
             console.log(response);
             return;
         }

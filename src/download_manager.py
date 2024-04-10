@@ -2,11 +2,12 @@
 import requests
 import os, io, hashlib
 import json
+from datetime import datetime
 
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 
-#from bs4 import BeautifulSoup
+
 
 base_cache_dir="./cache"
 
@@ -18,6 +19,8 @@ hdrs= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML,
 'Accept-Language': 'en-US,en;q=0.8',
 'Connection': 'keep-alive'}
 
+#from bs4 import BeautifulSoup
+
 def get_url_hash(url):
     return hashlib.md5(url.encode('utf-8')).hexdigest()
 
@@ -27,6 +30,11 @@ def get_cache_filepath(url, fileext=None):
     return os.path.join(base_cache_dir, get_url_hash(url)) + fileext
 
 def is_valid_cache(cache_filepath):
+    # _cache_info_filepath = cache_info_filepath(cache_filepath)
+    # if not os.path.exists(_cache_info_filepath):
+    #     return False
+
+    # read_cache_info_file(cache_filepath)
     # TODO: There should be a cache life time
 
     return os.path.isfile(cache_filepath)
@@ -46,14 +54,14 @@ def get_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
         if is_valid_cache(cache_filepath):
             return read_valid_cache_file(cache_filepath)
 
-    print(f"Downloading '{url}'");
+    print(f"Downloading '{url}'")
     req = Request(url, headers=hdrs)
     with urlopen(req) as response:
         return response.read()
 
 def get_and_cache_data(url, fileext=None, cache_filepath=None, ignore_cache=False):
     if ignore_cache:
-        content = get_data(url, fileext, ignoe_cache=True)
+        content = get_data(url, fileext, ignore_cache=True)
     else:
         if cache_filepath is None:
             cache_filepath = get_cache_filepath(url, fileext)
@@ -64,14 +72,17 @@ def get_and_cache_data(url, fileext=None, cache_filepath=None, ignore_cache=Fals
     write_to_cache_file(content, cache_filepath)
     return content
 
-##TODO: Instead of having a info file for each image, could just have one for all of them
-def read_cache_info_file(filepath):
-    with open(filepath, 'r') as f:
-        return json.load(f)
+# def cache_info_filepath(cache_filepath):
+#     return "%s_info.json" % cache_filepath
 
-def wrtie_cache_info_file(info, filepath):
-    with open(filepath, 'w') as f:
-        f.write(json.dumps(info))
+##TODO: Instead of having a info file for each image, could just have one for all of them
+# def read_cache_info_file(_cache_info_filepath):
+#     with open(_cache_info_filepath, 'r') as f:
+#         return json.load(f)
+
+# def wrtie_cache_info_file(info, cache_filepath):
+#     with open(cache_info_filepath(cache_filepath), 'w') as f:
+#         f.write(json.dumps(info))
 
 def get_html(url, ignore_cache=False):
     content = get_data(url, fileext='.html', ignore_cache=ignore_cache)
@@ -82,26 +93,23 @@ def get_and_cache_html(url, ignore_cache=False):
     return BeautifulSoup(content, features="lxml")
 
 def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height=8096):
-    base_cache_filepath = get_cache_filepath(url, fileext='')
-
-    cache_filepath = "%s_%u_%u.jpg" % (base_cache_filepath, max_width, max_height)
+    cache_filepath = "%s_%u_%u.jpg" % (get_cache_filepath(url, fileext=''), max_width, max_height)
 
     if not ignore_cache and is_valid_cache(cache_filepath):
         return read_valid_cache_file(cache_filepath)
 
-    content = get_and_cache_data(url, cache_filepath=base_cache_filepath, ignore_cache=ignore_cache)
+    content = get_and_cache_data(url, fileext=None, ignore_cache=ignore_cache)
     content_io = io.BytesIO(content)
 
     from PIL import Image
-    # im = Image.open(base_cache_filepath)
     im = Image.open(content_io, 'r')
-    width, height = im.size
+    # width, height = im.size
 
     im.thumbnail((max_width, max_height))
-    im.save(cache_filepath, format=im.format.upper())
+    im.save(cache_filepath)
     return read_valid_cache_file(cache_filepath)
 
-## The Following is not really tested but it is way to complicated anyway
+##The Following is not really tested but it is way to complicated anyway
 #def get_and_cache_image_data(url, cache_info_filepath=None, ignore_cache=False, max_width=None, max_height=None):
 #if cache_info_filepath is None:
 #cache_info_filepath = get_cache_filepath(url, '.json')
@@ -165,3 +173,99 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
 ##logging.getLogger().debug('Loading html dom from ' + cache_filename)
 ##
 ##return lxml.html.fromstring(f.read()) # .decode('utf-8', 'ignore')
+
+
+
+
+"""
+class CachedFile():
+    _info = None
+
+    def __init__(self, 
+                 url, 
+                 fileext=None, 
+                 cache_filepath=None, 
+                 ignore_cache=False,
+                 cache_expire_time_delay=None):
+        self.url = url
+        if cache_filepath is None:
+            self.cache_filepath = get_cache_filepath(url, fileext)
+        else:
+            self.cache_filepath = cache_filepath
+        self.info_filepath = "%s_info.json" % cache_filepath
+
+        self.cache_expire_time_delay = cache_expire_time_delay
+        
+    def get_data(self, ignore_cache=None):
+        if ignore_cache is None:
+            ignore_cache = False # self.ignore_cache
+
+        if not ignore_cache:
+            if self.is_valid():
+                return self.load_valid_cache_file()
+
+        # print(f"Downloading '{url}'");
+        req = Request(self.url, headers=hdrs)
+        with urlopen(req) as response:
+            return response.read()
+
+    def get_and_cache_data(self, ignore_cache=None, cache_expire_time_delay=None):
+        content = self.get_data(ignore_cache);
+
+        if cache_expire_time_delay is not None:
+            expire_time = datetime.now() + cache_expire_time_delay; 
+            self.set_expire_time(expire_time);
+        
+        if ignore_cache:
+            content = self.get_data(ignroe_cache=True)
+        else:
+            if cache_filepath is None:
+                cache_filepath = get_cache_filepath(surl, fileext)
+            if is_valid_cache(cache_filepath):
+                return read_valid_cache_file(cache_filepath)
+            content = get_data(url, fileext, ignore_cache=True)
+
+        write_to_cache_file(content, cache_filepath)
+        return content
+
+
+    # expire_time = datetime.now() + timedelta(days=1)
+
+    def get_expire_time(self):
+        if self._info is None:
+            self.load_info_file()
+
+        expire_time = self._info.get("expireTime", None)
+        if expire_time is None:
+            return None
+        return datetime.fromtimestamp(expire_time)
+
+    def set_expire_time(self, expire_time):
+        if self._info is None:
+            self.load_info_file()
+        
+        self._info()
+
+    def is_valid(self):
+        if not os.path.isfile(self.cache_filepath):
+            return False
+        
+        expire_time = self.get_expire_time()
+        if expire_time is not None and expire_time < datetime.now():
+            return False
+
+        return True
+
+    def load_info_file(self):
+        with open(self.info_filepath, 'r') as f:
+            self._info = json.load(f)
+    
+    def save_info_file(self, info, cache_filepath):
+        with open(self.info_filepath, 'w') as f:
+            f.write(json.dumps(info))
+"""
+
+
+
+
+

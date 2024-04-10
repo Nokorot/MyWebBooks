@@ -4,6 +4,7 @@ import src.download_manager as dm
 import re
 
 from PIL import UnidentifiedImageError
+from urllib.error import HTTPError
 
 class WebpageManager_Base():
     download_config_entries = {
@@ -121,7 +122,8 @@ class WebpageManager_Base():
             
             try:
                 data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
-            except UnidentifiedImageError:
+            except (UnidentifiedImageError, HTTPError):
+                # TODO: Report this in the download status.
                 return None
 
             img = epub.EpubImage(
