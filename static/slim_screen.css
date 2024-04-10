@@ -1,0 +1,30 @@
+/** Slim screen (i.e. phone screen) corrections */
+
+/* screen-size < 400px */
+@media only screen and (max-width: 400px) {
+    .book-img {   /* Ensure that the book-images are not to wide */
+        width:62.5vw;
+    }
+    .page-container {
+        /* Gradually reduce the margins */
+        margin-left: max(3px, calc(100% - 380px));
+        margin-right: max(3px, calc(100% - 380px));
+    }
+}
+
+/* This is very slim */
+@media only screen and (max-width: 200px) {
+    .books-list {
+        padding: 0px;
+    }
+    .list-item {
+        padding: 0px;
+        margin: 5px;
+    }
+    /* The buttons are still weird */
+    .button {
+        padding: 5px;
+        margin-left: 0px;
+        margin-right: 0px;
+    }
+}

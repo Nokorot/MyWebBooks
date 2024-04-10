@@ -15,25 +15,22 @@
     <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
     </div>
 
-    <div class="container-wrapper center">
-    <div class="container">
+    {#  I'm not sure what this is for
+        <div class="container-wrapper center">
+    #}
+    <div class="container books-list">
         {% for data in data_list %}
         <div class="list-item" style="display:inline-block;">
               <div class="center">
+
+                <a href="{{ url_for('books.download_config', id = data['_id']) }}", id = "download-book">
                 <img class="center book-img" src="{{data['img_url']}}" alt="{{data['title'] | default('no title')}}">
+                </a>
               </div>
-              <div style="text-align: center; padding: 15px 0px 5px 0px;">
-              <!--  <input type="text" name = "del" hidden value="{{ data['_id'] }}"> -->
-              <a href="{{ url_for('books.delete_book', id = data['_id']) }}" class = 'button delete-button'><i class="fas fa-trash-can"></i> Delete</a>
-              {# <a href="{{ url_for('books.send_to_kindle', id = data['_id']) }}" class="button delete-button fa-solid"> Send To Kindle </a> #}
-              <a href="{{ url_for('books.download_config', id = data['_id']) }}", id = "download-book" class="button download-button"><i class="fas fa-download"></i> Download</a>
-              <!-- <canvas id="loading-bar"></canvas> -->
-              </div>
-              <!-- <canvas id="loading-bar" hidden></canvas> -->     
         </div>
         {% endfor %}
     </div>
-    </div>
+    {#  </div> #}
     <script src="/static/epub/test.js"></script>
 
 
