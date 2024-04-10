@@ -26,12 +26,20 @@
 
 </table>
 
-<table class="center">
+{# <table class="center">
 <tbody>
     <td><a id="downloadButton" class="button delete-button fa-solid fa-download" href="#">Download</a></td>
     <td><a id="sendToKindleButton" class="button delete-button fa-solid" href="#">SendToKindle</a></td>
 </tbody>
 </table>
+#}
+
+<div class="form-table">
+    <a id="downloadButton" class="button fa-solid fa-download" href="#">Download</a>
+    <a id="sendToKindleButton" class="button fa-solid" href="#">SendToKindle</a>
+</div>
+
+
 
 <div id="collapsible-advanced" class="collapsible hidden">
 <h2 style="text-align: center" class="collapsbtn">Advanced</h2>
@@ -51,7 +59,7 @@
     <td colspan=3>
     </td>
 </tr>
-  {% for idx, (text, href, time) in CHAPTERS -%} {# Should construct this list in js. #}
+  {% for idx, (text, href, time) in CHAPTERS -%}
     <tr class="form-row">
       <td> <input type="checkbox" id="{{ idx }}" name="chapter-cbx-{{ idx }}" checked
         {% if time.timestamp() > LAST_SEND_TO_KINDE   %} is_new=true {% endif %}> </td>
@@ -103,7 +111,7 @@ function checkDownloadStatus(download_id, callback) {
             console.log("Status response: ");
             console.log(xhr.response);
             response = JSON.parse(xhr.response);
-            
+
             if (response['status'] === "Downloading") {
                 document.getElementById('status-bar').style.width = response['percentage'];
             } else {

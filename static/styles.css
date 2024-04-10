@@ -6,25 +6,16 @@ body {
     overflow: auto;
 }
 
-form{
-  display:table;
+.page-container {
+    margin: 20px;
 }
 
-
-h1 {
-    color: #333;
-}
-
-.container-wrap {
-}
-
-.container-wrapper { 
+/* .container-wrapper {
     text-align: center;
-    width:90%;
+    width:100%;
+} */
 
-}
-
-.container { 
+.container {
     text-align: center;
     display: flex;
     flex: auto;
@@ -32,7 +23,37 @@ h1 {
     justify-content: start;
   /* text-align: -webkit-center; */
     border: 1px solid #ccc;
-    padding: 10px;
+    /* padding: 10px; */
+}
+
+.header {
+  overflow:auto;
+  justify-content:space-around;
+  display:flex;
+  flex-wrap:wrap;
+  background: #00C9FB;
+  padding:10px;
+}
+
+.header-menu {
+    float: right;
+    height:100%;
+}
+
+.header-title {
+    position: relative;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+form {
+  display:table;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
 }
 
 .label {
@@ -45,17 +66,67 @@ h1 {
     margin-top: 2px;
 }
 
+.books-list {
+    padding: 10px;
+}
+
 .button {
     background-color: #4CAF50;
     color: white;
-    padding: 10px 15px;
-    border: none;
+    padding: 15px 15px;
+    /* border: none; */
     cursor: pointer;
     margin: 4px;
+    /* padding: 15px 25px; */
+    text-decoration: none;
+    border-radius: 8px;
 }
+
 
 .button:hover {
     background-color: #45a049;
+}
+
+
+/** From initial.css **/
+
+img.center {
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+}
+img.header-logo{
+    height:90px;
+}
+.book-img {
+    width:250px;
+    height:auto;
+}
+
+/** **/
+
+.toggle-dark-mode {
+    /* position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 9999; */
+    margin-top: 30px;
+}
+
+.new-data-instance-button {
+    background-color: #199319;
+    color: white;
+    padding: 15px 25px;
+    text-decoration: none;
+    border-radius: 8px;
+}
+.new-data-instance-button:hover {
+    background-color: #223094;
+}
+
+img.user-icon {
+  height: 100%;
+  border-radius: 50%;
 }
 
 .list-item {
@@ -69,15 +140,6 @@ h1 {
   /* Add additional styles as needed */
 }
 
-.header {
-  overflow:auto;
-  justify-content:space-around;
-  display:flex;
-  flex-wrap:wrap;
-  background: #00C9FB;
-  padding:10px;
-}
-
 .delete-button, .download-button {
     background-color: #D7BBF5;
     color: white;
@@ -86,11 +148,6 @@ h1 {
 }
 .delete-button:hover, .download-button:hover {
     background-color: #D7BBF5;
-}
-.button{
-    padding: 15px 25px;
-    text-decoration: none;
-    border-radius: 8px;
 }
 
 
@@ -297,18 +354,6 @@ input:checked + .slider:before {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.header-menu {
-    float: right;
-    height:100%;
-}
-
-.header-title {
-    position: relative;
-    top: 20px;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
 
 .header .dropdown-user {
     margin: 5px;
@@ -320,11 +365,6 @@ input:checked + .slider:before {
 
 .dropdown-user .dropdown-content {
   right: 10px;
-}
-
-img.user-icon {
-  height: 100%;
-  border-radius: 50%;
 }
 
 .hidden .dropdown-content {
@@ -352,4 +392,3 @@ img.user-icon {
 }
 
 .dropdown-content a:hover {background-color: #ddd;}
-
