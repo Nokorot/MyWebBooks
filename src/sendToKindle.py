@@ -10,18 +10,26 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 def sendToKindle(receiver=None, file=None, target_filename=None):
+    print("DEBUG: sendToKindle: \n\tfile='%s'\n\ttarget='%s'\n\trecever='%s'" % \
+            (file, target_filename, receiver))
+
     if os.environ.get('DEBUG') == "True":
-        print("DEBUG: sendToKindle: \n\tfile='%s'\n\ttarget='%s'\n\trecever='%s'" % \
-                (file, target_filename, receiver))
         print("The document is not sent in DEBUG mode!")
         return
 
     load_dotenv()
-    if not receiver or not file:
+    if not receiver:
+        print("ERROR: receiver=None\n")
         return
+    if not file:
+        print("ERROR: file=None\n")
+        return
+
+
     
     sender = os.environ.get("GMAIL")
     password = os.environ.get("GMAIL_PASSWORD")
+    print("Sending email from '%s' with password '%s'" % (sender, password))
     message = constructMessage(sender, receiver, file, target_filename)
     sendEmail(sender, password, receiver, message)
 
@@ -71,7 +79,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if len(sys.argv) < 2:
-        print("ERR: No enough arguments!")
+        print("ERROR: No enough arguments!")
         usage()
         sys.exit(1)
 
