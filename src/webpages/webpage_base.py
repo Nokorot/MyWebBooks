@@ -113,7 +113,7 @@ class WebpageManager_Base():
             cover_img_data = dm.get_and_cache_image_data(cover_img_url)
             self.ebook.set_cover("cover.png", cover_img_data)
 
-        self.chapter_count = 0;
+        self.chapter_count = 0
 
     def include_image(self, img_url):
         if self.images.get(img_url) is None:
@@ -122,7 +122,7 @@ class WebpageManager_Base():
             
             try:
                 data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
-            except (UnidentifiedImageError, HTTPError):
+            except (Exception, UnidentifiedImageError, HTTPError):
                 # TODO: Report this in the download status.
                 return None
 
@@ -137,7 +137,7 @@ class WebpageManager_Base():
         return self.images[img_url][0]
 
     def add_chapter(self, title : str, content): # add_images_in_content=True)
-        self.chapter_count += 1;
+        self.chapter_count += 1
         chapter = epub.EpubHtml(title = title,
                     file_name = f'chapter_{self.chapter_count}.xhtml')
         chapter.set_content(str(content))
