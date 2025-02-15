@@ -83,6 +83,12 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
     # width, height = im.size
 
     im.thumbnail((max_width, max_height))
+
+    # Check if the image has an alpha channel
+    if im.mode in ("RGBA", "LA"):
+        print("Image has an alpha channel. Converting to RGB...")
+        im = im.convert("RGB")
+
     im.save(cache_filepath)
     return read_valid_cache_file(cache_filepath)
 

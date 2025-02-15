@@ -116,12 +116,13 @@ class AsyncDownloadTask():
 
     def _download_the_book(self):
         wm = self.book.get_wm()
+        wm.download_book_to_server(self)
         try:
             wm.download_book_to_server(self)
         except Exception as e:
             self.status = AsyncDownloadTask.ERROR
             self.error_msg = str(e)
-            print("ERRROR ", e)
+            print("ERRROR ", e.with_traceback)
             return
 
         if self.do_send_to_kindle:
