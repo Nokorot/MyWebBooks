@@ -5,8 +5,26 @@ import os
 
 from src.login import login_required
 
-from auth0.management import Auth0
-from auth0.authentication import GetToken
+import pkg_resources
+
+# Get the installed version of auth0-python
+try:
+    auth0_version = pkg_resources.get_distribution("auth0-python").version
+except pkg_resources.DistributionNotFound:
+    raise ImportError("auth0-python is not installed. Please install it using `pip install auth0-python`.")
+
+# Parse the major version
+major_version = int(auth0_version.split('.')[0])
+
+# Import dynamically based on version
+if major_version == 3:
+    from auth0.v3.management import Auth0
+    from auth0.v3.authentication import GetToken
+else:
+    from auth0.management import Auth0
+    from auth0.authentication import GetToken
+
+
 
 from email_validator import validate_email, EmailNotValidError
 

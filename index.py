@@ -13,9 +13,8 @@ load_dotenv(dotenv_path='../.env')
 app = Flask(__name__)
 app.secret_key = os.environ['APP_SECRET_KEY']
 
-if __name__ == "__main__":
-    app.config['DEBUG'] = True 
-    os.environ['DEBUG'] = "True" # This is accessible in all threads
+app.config['DEBUG'] = \
+        ( os.environ['DEBUG'] == "True" )
 
 # Enable HTML minification
 app.config['MINIFY_HTML'] = not app.config['DEBUG']
@@ -36,13 +35,6 @@ def sendSelfRequest(url):
     while True:
         time.sleep(60)
         requests.get(url)
-
-domain = os.environ['DOMAIN']
-
-if not app.config['DEBUG']:
-    import threading
-    thread = threading.Thread(target=sendSelfRequest, args=(domain + "/test", ))
-    thread.start()
 
 @app.route("/")
 def home():
@@ -81,5 +73,5 @@ for source_file, url_prefix in blueprints.items():
     app.register_blueprint(module.blueprint, url_prefix=url_prefix)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv("PORT", default=5000))
-
+    port = os.getenv("PORT", default=5000)
+    app.run(port=port)
