@@ -3,6 +3,13 @@ import os
 from flask import g, redirect, url_for
 import functools
 
+def record_userinfo(user):
+    g.user = user
+    g.userinfo = g.user.get('userinfo') if g.user is not None else None
+    g.user_sid = g.userinfo.get('sid') if g.userinfo is not None else None
+    g.user_sub = g.userinfo.get('sub') if g.userinfo is not None else None
+
+
 oauth= None
 def __init(app):
     global oauth
@@ -35,7 +42,8 @@ def __init(app):
     @app.route("/callback", methods=["GET", "POST"])
     def authentication_callback():
         token = oauth.auth0.authorize_access_token()
-        g.user = session["user"] = token
+        user = session["user"] = token
+        record_userinfo(user)
 
         if user_data.get_kindle_address() is None:
             return redirect(url_for('user_data.set_kindle_address'))
