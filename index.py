@@ -74,4 +74,5 @@ for source_file, url_prefix in blueprints.items():
 
 if __name__ == '__main__':
     port = os.getenv("PORT", default=5000)
-    app.run(port=port)
+    host = os.getenv("APP_HOST", default=None)
+    app.run(host=host, port=port)
