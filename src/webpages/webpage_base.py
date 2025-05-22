@@ -119,11 +119,14 @@ class WebpageManager_Base():
         if self.images.get(img_url) is None:
             image_count = len(self.images.keys())
             epub_image_path = 'images/image_%u.jpg' % image_count
-            
+
             try:
                 data = dm.get_and_cache_image_data(img_url, max_width=1024, max_height=1024)
-            except (Exception, UnidentifiedImageError, HTTPError):
+            except (Exception, UnidentifiedImageError, HTTPError) as err:
                 # TODO: Report this in the download status.
+
+                print("ERROR: Exception downloading and converting image")
+                print(err)
                 return None
 
             img = epub.EpubImage(

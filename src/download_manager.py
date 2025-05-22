@@ -10,12 +10,14 @@ from bs4 import BeautifulSoup
 base_cache_dir="./cache"
 
 #This information is send to the server with the request
-hdrs= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
-'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-'Accept-Encoding': 'none',
-'Accept-Language': 'en-US,en;q=0.8',
-'Connection': 'keep-alive'}
+# hdrs= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+# 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+# 'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+# 'Accept-Encoding': 'none',
+# 'Accept-Language': 'en-US,en;q=0.8',
+# 'Connection': 'keep-alive'}
+
+hdrs = {"User-Agent": "Mozilla/5.0"}
 
 def get_url_hash(url):
     return hashlib.md5(url.encode('utf-8')).hexdigest()
@@ -76,6 +78,7 @@ def get_and_cache_image_data(url, ignore_cache=False, max_width=8096, max_height
         return read_valid_cache_file(cache_filepath)
 
     content = get_and_cache_data(url, fileext=None, ignore_cache=ignore_cache)
+
     content_io = io.BytesIO(content)
 
     from PIL import Image

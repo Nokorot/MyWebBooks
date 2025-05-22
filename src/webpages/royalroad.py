@@ -88,6 +88,33 @@ class RoyalRoadWM(WebpageManager_Base):
             ))
         return result
 
+
+    def handle_img_tags(self, task, content_bs):
+        for img in content_bs.select('img'):
+            if task.download_config.get('include_images', False):
+                src_url = img.get('src')
+
+                print(type(img), img.__dict__)
+                if src_url is None:
+                    img.decompose()
+                    continue
+
+                epub_image_path = self.include_image(src_url)
+                print("Includeing: '%s' as ''" % (src_url, epub_image_path))
+                if epub_image_path is None:
+                    img.decompose()
+                    ## TODO: Warning: flash
+                    continue
+
+                # TODO: Should down-scale imeages, to a more appropriate resolution
+                # imgobj = self.book.add_image(img.get('src'))
+                # imgobj.add_reference(self)
+
+                img['src'] = epub_image_path
+            else:
+                img.decompose()
+
+
     def download_book_to_server(self, task):
         self.init_epub(task.download_config)
 
@@ -96,10 +123,10 @@ class RoyalRoadWM(WebpageManager_Base):
 
         for index, (_, url, title) in enumerate(chapters):
             chapter_url = urljoin(self.base_url, url)
-            
+
             try:
                 chapter_page_bs = dm.get_and_cache_html(chapter_url)
-            except (HTTPError): 
+            except (HTTPError):
                 # TODO: Report this in the download status.
                 continue
 
@@ -107,10 +134,12 @@ class RoyalRoadWM(WebpageManager_Base):
             if task.download_config.get('include_chapter_titles', True):
                 chapter_content.append('<h1>%s</h1>' % title)
 
-            # if task.download_config.get('include_authors_notes', True):
-            #     # This is a por solution, since only the first is added and always at the top
-            #     note = chapter_page_bs.select('div.author-note-portle')[0]
-            #      content.append(note)
+            if task.download_config.get('include_authors_notes', True):
+                # This is a poor solution, since only the first is added and always at the top
+                note = chapter_page_bs.select('div.author-note-portlet')
+                if len(note) > 0:
+                    self.handle_img_tags(task, note[0])
+                    chapter_content.append(str(note[0]))
 
             chapter_inner = chapter_page_bs.select('div.chapter-inner')[0]
 
@@ -128,28 +157,7 @@ class RoyalRoadWM(WebpageManager_Base):
                     for element in hidden_elements:
                         element.extract()
 
-            for img in chapter_inner.select('img'):
-                if task.download_config.get('include_images', False):
-                    src_url = img.get('src')
-
-                    print(type(img), img.__dict__)
-                    if src_url is None:
-                        img.decompose()
-                        continue
-                    
-                    epub_image_path = self.include_image(src_url)
-                    if epub_image_path is None:
-                        img.decompose()
-                        ## TODO: Warning: flash
-                        continue
-
-                    # TODO: Should down-scale imeages, to a more appropriate resolution
-                    # imgobj = self.book.add_image(img.get('src'))
-                    # imgobj.add_reference(self)
-
-                    img['src'] = epub_image_path
-                else:
-                    img.decompose()
+            self.handle_img_tags(task, chapter_inner)
 
             chapter_content.append(str(chapter_inner))
 
