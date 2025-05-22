@@ -2,9 +2,9 @@
 from bson.objectid import ObjectId
 import src.mongodb_api_1 as mongodb_api
 import functools
+from flask import g
 
 from src.webpages import get_wm_class, match_url
-from src.user_data import get_user_name, get_user_sub
 
 def load_bookdata(id_name='id', book_data_name='book'):
     def decorator(func):
@@ -21,24 +21,24 @@ def load_bookdata(id_name='id', book_data_name='book'):
 
 def get_user_books():
     # TAG: USER_NAME2SUB
-
+    
     # List _OLD_ type entries
-    name_query = {'owner': get_user_name(), 'owner_sub': None}
+    name_query = {'owner': g.user.user_name, 'owner_sub': None}
     for book in mongodb_api.find('rr', 'books', name_query):
         # Converts this entry to _NEW_ type
         mongodb_api.updateOne('rr', 'books', book, \
-                {'$set':   {'owner_sub': get_user_sub()}, \
+                {'$set':   {'owner_sub': g.user.user_sub}, \
                  '$unset': {'owner': None }})
 
     # List _NEW_ type entries
-    user_sub_query = {'owner_sub': get_user_sub()}
+    user_sub_query = {'owner_sub': g.user.user_sub}
     for book in mongodb_api.find('rr', 'books', user_sub_query):
         with BookData(book['_id'], book) as bd:
             yield bd
 
 def add_new_book_entry(wm_class_name, data_entries):
     mongodb_api.insertOne('rr', 'books', {
-        'owner_sub' : get_user_sub(),
+        'owner_sub' : g.user.user_sub,
         'wm_class_name': wm_class_name,
         **data_entries,
         })
@@ -56,11 +56,11 @@ class BookData():
         # This is probably unnecessary
         if mongod_data.get('owner_sub') is None:
             owner_name = mongod_data.get('owner')
-            if owner_name == get_user_name():
+            if owner_name == g.user.user_name:
                 mongodb_api.updateOne('rr', 'books', \
-                        {'$set':   {'owner_sub': get_user_sub()}, \
+                        {'$set':   {'owner_sub': g.user.user_sub}, \
                          '$unset': {'owner': None }})
-                mongod_data.set('owner_sub', get_user_sub())
+                mongod_data.set('owner_sub', g.user.user_sub)
 
         # NOTE: We are assuming mongod_data agrees with the one on mongodb.
         #   It is used when we loop through the entries of find in list_books
@@ -112,7 +112,7 @@ class BookData():
         return self.wm
 
     def is_owner(self):
-        return self.mongod_data.get('owner_sub') == get_user_sub()
+        return self.mongod_data.get('owner_sub') == g.user.user_sub
 
     def __getitem__(self, key):
         return self.get(key)

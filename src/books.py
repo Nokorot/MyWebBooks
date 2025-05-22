@@ -90,7 +90,7 @@ def download_config(id, book):
         config_data = wm.parse_download_config_data_form(request.form)
         do_send_to_kindle = request.form.get("do_send_to_kindle") == 'true'
         downloadTask = AsyncDownloadTask.create_or_get( \
-                book, config_data, g.userinfo)
+                book, config_data, g.user.userinfo)
 
         downloadTask.do_send_to_kindle = do_send_to_kindle
         downloadTask.start_download()
@@ -144,7 +144,7 @@ def download_epub_file(download_id):
 @login_required
 def delete_book(id):
     with bd.BookData(id) as book:
-        if book['owner'] == g.user['userinfo']['name']:
+        if book['owner'] == g.user.userinfo['name']: # FIX!!!!: This should be sub
             book.delete()
     return redirect(url_for('books.list_books'))
 
