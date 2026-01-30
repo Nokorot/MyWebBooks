@@ -1,31 +1,30 @@
-
-import os
 import json
-from datetime import datetime
-
+import os
 import threading
-
-import src.user_data as user_data
-from .book_data import BookData
-from .sendToKindle import sendToKindle
+from datetime import datetime
 
 from flask import url_for
 
+import src.user_data as user_data
+
+from .book_data import BookData
+from .sendToKindle import sendToKindle
+
 g_download_tasks = {}
 
-class AsyncDownloadTask():
+
+class AsyncDownloadTask:
     FINISHED = "Finished"
     ERROR = "ERROR"
     DOWNLOADING = "Downloading"
 
-    def __init__(self, _id: str, book: BookData,
-                 download_config: dict, userinfo: dict):
+    def __init__(self, _id: str, book: BookData, download_config: dict, userinfo: dict):
         self.id = _id
         self.book = book
         self.download_config = download_config
         self.userinfo = userinfo
 
-        self.local_epub_filepath = 'out/{}.epub'.format(self.id)
+        self.local_epub_filepath = "out/{}.epub".format(self.id)
         self.download_url = url_for("books.download_epub_file", download_id=self.id)
 
         self.status = None
@@ -79,7 +78,7 @@ class AsyncDownloadTask():
             return
 
         self.status = AsyncDownloadTask.DOWNLOADING
-        thread = threading.Thread(target = self._download_the_book)
+        thread = threading.Thread(target=self._download_the_book)
         thread.start()
 
     def async_send_to_kindle(self):
@@ -91,10 +90,9 @@ class AsyncDownloadTask():
             print("DEBUG: Task [{}] is not finished yet. Sending to kindle on finished")
             self.do_send_to_kindle = True
 
-        thread = threading.Thread(target = self._send_to_kindle)
+        thread = threading.Thread(target=self._send_to_kindle)
         thread.start()
         return
-
 
     def _status_msg_response(self):
         responce = {}
@@ -106,11 +104,11 @@ class AsyncDownloadTask():
 
         responce["status"] = self.status
         if self.status == AsyncDownloadTask.ERROR:
-            responce["error_msg"]           = self.error_msg
+            responce["error_msg"] = self.error_msg
         elif self.status == AsyncDownloadTask.FINISHED:
-            responce["download_url"]        = self.download_url
+            responce["download_url"] = self.download_url
         elif self.status == AsyncDownloadTask.DOWNLOADING:
-            responce["percentage"] = "%u%s" % ( self.percentage, '%')
+            responce["percentage"] = "%u%s" % (self.percentage, "%")
 
         return responce
 
@@ -136,16 +134,18 @@ class AsyncDownloadTask():
         self.is_sent_to_kindle = True
         self.book.set("last_send_to_kindle", int(datetime.now().timestamp()))
         self.book.push()
-        user_sub = self.userinfo.get('sub')
+        user_sub = self.userinfo.get("sub")
         kindle_address = user_data.get_kindle_address(user_sub)
         if kindle_address is None:
             return
 
-        title = self.download_config.get('title')
+        title = self.download_config.get("title")
         print("DEBUG: Sending book {} ({})".format(title, self.id))
 
-        sendToKindle(file = self.local_epub_filepath,
-                target_filename="{}.epub".format(title),
-                receiver = kindle_address)
+        sendToKindle(
+            file=self.local_epub_filepath,
+            target_filename="{}.epub".format(title),
+            receiver=kindle_address,
+        )
         # NOTE: flash dose not work in task thread
         # flash('The email has been sent successfully')
