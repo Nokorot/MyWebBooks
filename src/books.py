@@ -160,7 +160,7 @@ def download_epub_file(download_id):
 @login_required
 def delete_book(id):
     with bd.BookData(id) as book:
-        if book["owner"] == g.user.userinfo["name"]:  # FIX!!!!: This should be sub
+        if book.get("owner_sub") == g.user.user_sub:
             book.delete()
     return redirect(url_for("books.list_books"))
 
