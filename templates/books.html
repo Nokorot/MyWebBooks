@@ -1,14 +1,20 @@
 {% extends 'header.html' %}
 
-{% block head %} 
+{% block head %}
 <title>Books</title>
-{% endblock %} 
+{% endblock %}
 
 {%block title%}Book Data List{%endblock title%}
 
 {% block body %}
     <div style="text-align: center;">
     <a href="{{ url_for('books.new_book') }}" class="new-data-instance-button fa fa-book-medical"> Add Book</a>
+
+    {% if ARCHIVE  %}
+      <a href="{{ url_for('books.list_books', tags=None) }}" class="button fa-solid">Close Archive</a>
+    {% else   %}
+      <a href="{{ url_for('books.list_books', tags='archived') }}" class="button fa-solid">Archive</a>
+    {% endif %}
     </div>
 
     {#  I'm not sure what this is for
@@ -22,6 +28,7 @@
                 <a href="{{ url_for('books.download_config', id = data['_id']) }}", id = "download-book">
                 <img class="center book-img" src="{{data['img_url']}}" alt="{{data['title'] | default('no title')}}">
                 </a>
+
               </div>
         </div>
         {% endfor %}

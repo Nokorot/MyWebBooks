@@ -67,6 +67,12 @@ def new_book():
 @blueprint.route("/list_books", methods=["GET"])
 @login_required
 def list_books():
+    query_tags = request.args.get("tags") or set()
+
+    if isinstance(query_tags, str):
+        query_tags = set([tag.strip() for tag in query_tags.split(",")])
+        query_tags.discard("")
+
     books_list = []
 
     # USER_NAME2SUB: Make sure the kindle_address entry is also converted
@@ -78,21 +84,90 @@ def list_books():
         if wm is None:
             continue
 
-        books_list.append(
-            {
-                "_id": wm.id,
-                "title": wm.get_book_data("title"),
-                "img_url": wm.get_book_data("cover_image"),
-            }
+        tags = set(book.get("tags") or [])
+
+        if (
+            # If 'all' is in the query_tags list, then show all entries
+            query_tags.__contains__("all")
+            or (  # If no query_tags then only show untaged entries
+                len(query_tags) == 0 and len(tags) == 0
+            )
+            # or (  # If one of the entry tags is in the query;  OR policy
+            #     len(tags.intersection(query_tags)) != 0
+            # )
+            or (  # If the entry has all the query_tags;  AND policy
+                len(query_tags) != 0 and query_tags.issubset(tags)
+            )
+        ):
+            books_list.append(
+                {
+                    "_id": wm.id,
+                    "title": wm.get_book_data("title"),
+                    "img_url": wm.get_book_data("cover_image"),
+                    "tags": tags,
+                }
+            )
+
+    return render_template(
+        "books.html", data_list=books_list, ARCHIVE=query_tags.__contains__("archived")
+    )
+
+
+def get_tags(book: bd.BookData) -> set[str]:
+    tags = book.get("tags") or []
+
+    if not isinstance(tags, list):
+        raise RuntimeError(
+            f"Tags should be a set, got type: '{type(tags)}' value: '{str(tags)}'"
         )
 
-    return render_template("books.html", data_list=books_list)
+    return set(tags)
+
+
+def add_tags(book: bd.BookData, tags: set[str]):
+    print("Adding tags", tags)
+
+    book.set("tags", list(get_tags(book) | tags))
+
+
+def remove_tags(book: bd.BookData, tags: set[str]):
+    print("Removing ttags", tags)
+
+    book.set("tags", list(get_tags(book) - tags))
+
+
+@blueprint.route("unarchive_book/<id>", methods=["POST"])
+@login_required
+@bd.load_bookdata("id", "book")
+def unarchive_book(id, book: bd.BookData):
+    try:
+        remove_tags(book, {"archived"})
+    except Exception as e:
+        print(e)
+        return {"status": "error"}
+
+    return {"status": "success"}
+
+
+@blueprint.route("archive_book/<id>", methods=["POST"])
+@login_required
+@bd.load_bookdata("id", "book")
+def archive_book(id, book: bd.BookData):
+    print("Archiveing ", id)
+
+    try:
+        add_tags(book, {"archived"})
+    except Exception as e:
+        print(e)
+        return {"status": "error"}
+
+    return {"status": "success"}
 
 
 @blueprint.route("download_config/<id>", methods=["GET", "POST"])
 @login_required
 @bd.load_bookdata("id", "book")
-def download_config(id, book):
+def download_config(id, book: bd.BookData):
     wm = book.get_wm()
 
     if request.method == "POST":
@@ -113,13 +188,17 @@ def download_config(id, book):
     data = wm.get_default_download_config_data()
     chapters = wm.get_book_chapters_list()
 
+    tags = book.get("tags") or []
+
     kwargs = {
+        "BOOK_ID": id,
         "TITLE": "Download Config",
         "DESCRIPTION": "",
         "SUBMIT": "Download",
         "DATA": data,
         "CHAPTERS": list(enumerate(chapters))[::-1],
         "LAST_SEND_TO_KINDE": book.get("last_send_to_kindle", 0),
+        "ARCHIVED": tags.__contains__("archived"),
     }
     return render_template("download_config.html", **kwargs)
 
@@ -156,9 +235,11 @@ def download_epub_file(download_id):
     )
 
 
-@blueprint.route("/delete_book/<id>")
+@blueprint.route("/delete_book/<id>", methods=["POST"])
 @login_required
 def delete_book(id):
+    print("Deleting Book ", id)
+
     with bd.BookData(id) as book:
         if book.get("owner_sub") == g.user.user_sub:
             book.delete()

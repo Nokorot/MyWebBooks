@@ -27,8 +27,21 @@
 </table>
 
 <div class="form-table">
-    <a id="downloadButton" class="button fa-solid fa-download" href="#">Download</a>
-    <a id="sendToKindleButton" class="button fa-solid" href="#">SendToKindle</a>
+    <a id="downloadButton" class="button" style="background-color:#09840e" href="#">Download</a>
+    <a id="sendToKindleButton" class="button" style="background-color:#142c8d" href="#">SendToKindle</a>
+
+
+    {% if ARCHIVED  %}
+      <a id="archiveButton" class="button"
+        style="background-color: #666"
+        href="#">Unarchive</a>
+    {% else   %}
+      <a id="archiveButton" class="button"
+        style="background-color: #666"
+        href="#">Archive</a>
+    {% endif %}
+
+    <a id="deleteButton" class="button" style="background-color:#940808" href="#">Delete</a>
 </div>
 
 
@@ -92,6 +105,7 @@ function selectNew() {
 
 let nIntervId;
 
+
 function checkDownloadStatus(download_id, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', "{{ url_for('books.download_status') }}", true);
@@ -152,6 +166,51 @@ function downloadBook(do_send_to_kindle, callback) {
     };
     xhr.send(formData);
 }
+
+
+document.getElementById("deleteButton").addEventListener("click", () => {
+
+    var result = confirm("Are you sure yoy want to delete?");
+    if (!result) {
+      return;
+    }
+
+    console.log("Deleting book");
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('POST', "{{ url_for('books.delete_book', id= BOOK_ID ) }}", true);
+
+    xhr.onload = function () {
+      console.log("Book deleted");
+      location.href = "{{ url_for('books.list_books' ) }}";
+    }
+
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.send();
+});
+
+
+document.getElementById("archiveButton").addEventListener("click", () => {
+    var xhr = new XMLHttpRequest();
+
+    {% if ARCHIVED  %}
+      xhr.open('POST', "{{ url_for('books.unarchive_book', id= BOOK_ID ) }}", true);
+
+      xhr.onload = function () {
+          location.reload();
+      }
+    {% else  %}
+      xhr.open('POST', "{{ url_for('books.archive_book', id= BOOK_ID ) }}", true);
+
+      xhr.onload = function () {
+          location.href = "{{ url_for('books.list_books' ) }}";
+      }
+    {% endif  %}
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.send();
+});
+
 
 document.getElementById("downloadButton").addEventListener("click", () => {
     downloadBook(false, function (response) {
