@@ -4,7 +4,6 @@ import sys
 
 from dotenv import load_dotenv
 from flask import Flask, g, redirect, session, url_for
-from flask_htmlmin import HTMLMIN
 
 import src.user_data as user_data
 
@@ -13,13 +12,8 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ["APP_SECRET_KEY"]
 
-app.config["DEBUG"] = os.environ["DEBUG"] == "True"
+app.config["DEBUG"] = os.environ.get("DEBUG", "False") == "True"
 
-# Enable HTML minification
-app.config["MINIFY_HTML"] = not app.config["DEBUG"]
-# Skip removing comments
-app.config["MINIFY_HTML_SKIP_COMMENTS"] = not app.config["DEBUG"]
-html_min = HTMLMIN(app)
 
 if not os.path.exists("./out"):
     os.makedirs("./out")
