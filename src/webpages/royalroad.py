@@ -109,6 +109,7 @@ class RoyalRoadWM(WebpageManager_Base):
         return result
 
     def handle_img_tags(self, task, content_bs):
+
         for img in content_bs.select("img"):
             if task.download_config.get("include_images", False):
                 src_url = img.get("src")
@@ -119,7 +120,8 @@ class RoyalRoadWM(WebpageManager_Base):
                     continue
 
                 epub_image_path = self.include_image(src_url)
-                print("Includeing: '%s' as ''" % (src_url, epub_image_path))
+                print(f"Includeing: '{src_url}' as '{epub_image_path}'")
+
                 if epub_image_path is None:
                     img.decompose()
                     ## TODO: Warning: flash
