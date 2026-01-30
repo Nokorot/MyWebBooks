@@ -114,7 +114,6 @@ class AsyncDownloadTask:
 
     def _download_the_book(self):
         wm = self.book.get_wm()
-        wm.download_book_to_server(self)
         try:
             wm.download_book_to_server(self)
         except Exception as e:
