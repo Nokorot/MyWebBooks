@@ -142,7 +142,7 @@ def get_kindle_address(user_sub=None):
                 "rr",
                 "kindle_address",
                 result,
-                {"$set": {"owner_sub": g.user.user_sub, "$unset": {"owner": None}},
+                {"$set": {"owner_sub": g.user.user_sub, "$unset": {"owner": None}}},
             )
 
     if result is not None:
